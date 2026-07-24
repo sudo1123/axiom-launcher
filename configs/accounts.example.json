@@ -1,0 +1,10 @@
+{
+    "accounts": [
+        {
+            "id": "offline_default",
+            "type": "offline",
+            "username": "Steve"
+        }
+    ],
+    "selected": "offline_default"
+}
