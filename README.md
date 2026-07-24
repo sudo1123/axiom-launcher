@@ -1,6 +1,7 @@
 # Axiom Launcher
 
 一个用 Python 编写的第三方 Minecraft: Java Edition 启动器（离线模式）。
+> A third-party Minecraft: Java Edition launcher (offline mode). Full documentation is in Chinese below.
 
 > ⚠️ **免责声明**：本项目与 Mojang、Microsoft、Xbox 或 Minecraft 无任何官方关联，不隶属于、不受其赞助或认可。Minecraft 及相关名称、素材均为其各自所有者的财产。使用本启动器前，请自行确保你合法拥有 Minecraft: Java Edition，并遵守 [Minecraft 使用指南](https://www.minecraft.net/en-us/usage-guidelines)、EULA 及 Microsoft 服务协议等相关条款。本项目不打包、不分发任何 Minecraft 游戏资源（jar / assets / libraries），只在本地读取你已安装的 Minecraft 目录。
 
