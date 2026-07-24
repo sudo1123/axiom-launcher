@@ -29,7 +29,7 @@ DEFAULT_CONFIG={
 
     "launcher": {
         "name": "Axiom Launcher",
-        "version": "0.2_build2"
+        "version": "0.2.2"
     },
 
     "minecraft": {

@@ -2,7 +2,7 @@
     "config_version": 1,
     "launcher": {
         "name": "Axiom Launcher",
-        "version": "0.2_build2"
+        "version": "0.2.2"
     },
     "minecraft": {
         "directory": "C:\\path\\to\\.minecraft",
