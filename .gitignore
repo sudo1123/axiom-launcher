@@ -14,7 +14,10 @@ latest.log
 
 # ===== Config（真实运行时生成的配置文件，包含本机路径/账号信息，不进仓库） =====
 configs/*
-!configs/*.example.json
+instances/*
+launcher_logs/*
+data/*
+
 
 # ===== Test =====
-text_account.py
+text.py

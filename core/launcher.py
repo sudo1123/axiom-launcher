@@ -1,3 +1,19 @@
+# Axiom Launcher - a third-party Minecraft: Java Edition launcher
+# Copyright (C) 2026  Felix Qu
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import accounts.offline
 import accounts.manager
 from pathlib import Path
@@ -6,130 +22,31 @@ import subprocess
 import platform
 import os
 
-'''== 配置文件默认内容(将移至setup) == '''
-
-DEFAULT_CONFIG={
-    "config_version": 1,
-
-    "launcher": {
-        "name": "Axiom Launcher",
-        "version": "0.2.2"
-    },
-
-    "minecraft": {
-        "directory": r"C:\path\to\.minecraft",
-        "selected_version": "1.20.1"
-    },
-
-    "java": {
-        "path": r"C:\path\to\java.exe",
-        "memory": {
-            "min": 1024,
-            "max": 4096
-        }
-    },
-
-    "game": {
-        "resolution": {
-            "width": 854,
-            "height": 480
-        },
-        "fullscreen": "false"
-    }
-}
-
-DEFAULT_LAUNCH_CONTEXT = {
-    "is_demo_user": False,
-
-    "has_custom_resolution": False,
-
-    "has_quick_plays_support": False,
-
-    "is_quick_play_singleplayer": False,
-
-    "is_quick_play_multiplayer": False,
-
-    "is_quick_play_realms": False
-}
-
-DEFAULT_ACCOUNTS={
-    "accounts": [
-        {
-            "id": "offline_default",
-            "type": "offline",
-            "username": "Steve"
-        }
-    ],
-
-    "selected": "offline_default"
-}
-
 '''== 配置加载 =='''
-def config_init ():
-    current_script_path = Path(__file__).resolve()                #获取当前脚本文件的绝对路径
-    program_dir = current_script_path.parent.parent   #跳转至程序主目录               
-    config_dir = program_dir / "configs"
-    config_dir.mkdir(parents=True, exist_ok=True)                 #确保configs目录存在
-    config_file_path = config_dir / "config.json"
-    if not config_file_path.exists():                             #如果config 文件不存在,创建之
-        with open ( config_file_path ,"w" ) as c: 
-            json.dump(
-            DEFAULT_CONFIG,
-            c,
-            indent=4
-            )
-    return config_file_path                                       #返回配置文件路径
 
 def config_load(config_file_path):
-    with open (config_file_path,"r") as cf:
+    path = Path(config_file_path)
+    # 文件不存在，抛出错误
+    if not path.exists():
+
+        raise EnvironmentError("config加载失败，请检查配置文件")
+    
+    with open (path,"r", encoding="utf-8") as cf:
         return json.load(cf)
 
 def launch_context_load(path):
 
     path = Path(path)
 
-    # 文件不存在，创建默认配置
+    # 文件不存在，抛出错误
     if not path.exists():
 
-        path.parent.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(
-                DEFAULT_LAUNCH_CONTEXT,
-                f,
-                indent=4
-            )
-
-        return DEFAULT_LAUNCH_CONTEXT.copy()
+        raise EnvironmentError("launch_context加载失败，请检查配置文件")
 
 
     # 文件存在，读取
     with open(path, "r", encoding="utf-8") as f:
         context = json.load(f)
-
-
-    # 补充新增字段
-    changed = False
-
-    for key,value in DEFAULT_LAUNCH_CONTEXT.items():
-
-        if key not in context:
-            context[key] = value
-            changed = True
-
-
-    if changed:
-
-        with open(path,"w",encoding="utf-8") as f:
-            json.dump(
-                context,
-                f,
-                indent=4
-            )
-
 
     return context
 
@@ -137,48 +54,14 @@ def account_load(path):
 
     path = Path(path)
 
-    # 文件不存在，创建默认配置
+    # 文件不存在，抛出错误
     if not path.exists():
 
-        path.parent.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(
-                DEFAULT_ACCOUNTS,
-                f,
-                indent=4
-            )
-
-        return DEFAULT_ACCOUNTS.copy()
-
+        raise EnvironmentError("account加载失败，请检查配置文件")
 
     # 文件存在，读取
     with open(path, "r", encoding="utf-8") as f:
         context = json.load(f)
-
-
-    # 补充新增字段
-    changed = False
-
-    for key,value in DEFAULT_ACCOUNTS.items():
-
-        if key not in context:
-            context[key] = value
-            changed = True
-
-
-    if changed:
-
-        with open(path,"w",encoding="utf-8") as f:
-            json.dump(
-                context,
-                f,
-                indent=4
-            )
-
 
     return context
 
@@ -489,10 +372,11 @@ class Launcher:
         pass
 
     def start(self):
+        #配置文件加载
         self.PROGRAM_DIR = Path(__file__).resolve().parent.parent
         self.CONFIG_DIR = self.PROGRAM_DIR / "configs"
-        self.config_file_path=config_init()
-        self.config=config_load(self.config_file_path)
+        self.config_file_path = self.CONFIG_DIR / "config.json"
+        self.config = config_load(self.config_file_path)
         self.runtime_context=runtime_context_load()
         self.launch_context=launch_context_load(self.CONFIG_DIR/"launch_context.json")
         self.account_config=account_load(self.CONFIG_DIR/"accounts.json")
@@ -502,7 +386,8 @@ class Launcher:
             return
         if not minecraft_validity_check(self.config):
             return
-        
+
+        #启动准备
         version_json = version_json_load(self.config)
         mainclass=version_json["mainClass"]
         mc_jar_path=get_minecraft_jar_path(self.config)
@@ -526,4 +411,6 @@ class Launcher:
             filtered_game_arguments=arguments_replace(filtered_game_arguments,argument_context)
             filtered_jvm_arguments=arguments_replace(filtered_jvm_arguments,argument_context)
             command = build_launch_command(self.config["java"]["path"],filtered_jvm_arguments,mainclass,filtered_game_arguments)
+
+        #启动Minecraft
             launch_minecraft(command)

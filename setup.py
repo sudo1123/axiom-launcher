@@ -14,61 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# == 文件默认内容 ==
-'''== 配置文件默认内容 == '''
+from setup.initializer import initialize
 
-DEFAULT_CONFIG={
-    "config_version": 1,
 
-    "launcher": {
-        "name": "Axiom Launcher",
-        "version": "0.2.2"
-    },
-
-    "minecraft": {
-        "directory": r"C:\path\to\.minecraft",
-        "selected_version": "version_number"
-    },
-
-    "java": {
-        "path": r"C:\path\to\java.exe",
-        "memory": {
-            "min": 1024,
-            "max": 4096
-        }
-    },
-
-    "game": {
-        "resolution": {
-            "width": 854,
-            "height": 480
-        },
-        "fullscreen": "false"
-    }
-}
-
-DEFAULT_LAUNCH_CONTEXT = {
-    "is_demo_user": False,
-
-    "has_custom_resolution": False,
-
-    "has_quick_plays_support": False,
-
-    "is_quick_play_singleplayer": False,
-
-    "is_quick_play_multiplayer": False,
-
-    "is_quick_play_realms": False
-}
-
-DEFAULT_ACCOUNTS={
-    "accounts": [
-        {
-            "id": "offline_default",
-            "type": "offline",
-            "username": "Steve"
-        }
-    ],
-
-    "selected": "offline_default"
-}
+if __name__ == "__main__":
+    initialize()
