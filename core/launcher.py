@@ -18,22 +18,13 @@ import accounts.offline
 import accounts.manager
 from pathlib import Path
 from core.instance_manager import InstanceManager
+from core.config_manager import ConfigManager
 import json
 import subprocess
 import platform
 import os
 
 '''== 配置加载 =='''
-
-def config_load(config_file_path):
-    path = Path(config_file_path)
-    # 文件不存在，抛出错误
-    if not path.exists():
-
-        raise EnvironmentError("config加载失败，请检查配置文件")
-    
-    with open (path,"r", encoding="utf-8") as cf:
-        return json.load(cf)
 
 def launch_context_load(path):
 
@@ -359,7 +350,7 @@ def build_launch_command(
 
 def launch_minecraft(command):
 
-    process=subprocess.Popen(
+    process=subprocess.run(
         command
     )
 
@@ -371,13 +362,13 @@ class Launcher:
 
     def __init__(self):
         self.instance_manager = InstanceManager()
+        self.config_manager = ConfigManager()
 
     def start(self):
         #配置文件加载
         self.PROGRAM_DIR = Path(__file__).resolve().parent.parent
         self.CONFIG_DIR = self.PROGRAM_DIR / "configs"
-        self.config_file_path = self.CONFIG_DIR / "config.json"
-        self.config = config_load(self.config_file_path)
+        self.config = self.config_manager.load_config()
         self.runtime_context=runtime_context_load()
         self.launch_context=launch_context_load(self.CONFIG_DIR/"launch_context.json")
         self.account_config=account_load(self.CONFIG_DIR/"accounts.json")

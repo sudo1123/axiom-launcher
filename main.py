@@ -15,12 +15,19 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from core.launcher import Launcher
+# from core.launcher import Launcher
+
+
+# def main():
+#     launcher = Launcher()
+#     launcher.start()
+
+from cli.cli import CLI
 
 
 def main():
-    launcher = Launcher()
-    launcher.start()
+    cli = CLI()
+    cli.run()
 
 
 if __name__ == "__main__":
