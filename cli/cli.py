@@ -47,7 +47,8 @@ Axiom Launcher
 
 1. 查看实例
 2. 创建实例
-3. 返回
+3. 删除实例
+4. 返回
 
 请输入:
         """)
@@ -99,30 +100,122 @@ ID:
 
             choice = input(">")
 
-            if choice == "3":
+            if choice == "4":
                 break
 
             elif choice == "1":
                 result = self.instance_manager.list_instances()
 
                 print(
-                """
+    """
 ====================
 实例管理 : 实例列表
 ====================
 """
-                    )
+                )
+
+                if not result:
+                    print("暂无实例")
+                    input("按ENTER返回")
+                    continue
+
+
+                instance_name_dic = {}
+
                 index = 1
 
                 for item in result:
                     print(f"{index}. {item.name}")
+                    instance_name_dic[str(index)] = item.name
                     index += 1
 
-                print("")
-                input("按ENTER回到上级菜单")
+
+                choice = input("请选择实例:\n>")
+
+
+                if choice in instance_name_dic:
+                    self.show_instance(
+                        instance_name_dic[choice]
+                    )
 
             elif choice == "2":
                 self.create_instance()
+            elif choice == "3":
+                self.delete_instance()
+
+
+
+
+    def show_instance(self, instance_id):
+        instance_config = self.instance_manager.load_instance(instance_id)
+
+        print(
+f"""
+====================
+实例信息
+====================
+
+ID:
+{instance_config["id"]}
+
+Minecraft版本:
+{instance_config["version"]}
+
+类型:
+{instance_config["type"]}
+
+路径:
+{self.instance_manager.instances_path / instance_id}
+
+"""
+        )
+
+        input("按ENTER返回")
+
+    def delete_instance(self):
+        print("""
+====================
+删除实例
+====================
+    """)
+
+        result = self.instance_manager.list_instances()
+
+        if not result:
+            print("暂无实例")
+            input("按ENTER返回")
+            return
+
+        instance_name_dic = {}
+
+        index = 1
+
+        for item in result:
+            print(f"{index}. {item.name}")
+            instance_name_dic[str(index)] = item.name
+            index += 1
+
+        choice = input("请选择删除的实例:\n>")
+
+        if choice not in instance_name_dic:
+            print("选择无效")
+            input("按ENTER返回")
+            return
+
+        instance_id = instance_name_dic[choice]
+
+        confirm = input(
+            f"确认删除 {instance_id} ? (y/n)\n>"
+        )
+
+        if confirm.lower() == "y":
+            try:
+                self.instance_manager.delete_instance(instance_id)
+                print("删除成功")
+            except FileNotFoundError as e:
+                print(e)
+
+        input("按ENTER返回")
 
     def run(self):
         while True:

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from pathlib import Path
 import json
+import shutil
 
 class InstanceManager():
     def __init__(self):
@@ -88,4 +89,20 @@ class InstanceManager():
                       indent=4)
         minecraft_path = instance_path / ".minecraft"
         minecraft_path.mkdir()
+        
+    def delete_instance(self, instance_id):
+        result = self.list_instances()
 
+        instance_exist = False
+        instance_path = None
+
+        for item in result:
+            if instance_id == item.name:
+                instance_exist = True
+                instance_path = item
+                break
+
+        if not instance_exist:
+            raise FileNotFoundError("实例不存在")
+
+        shutil.rmtree(instance_path)
