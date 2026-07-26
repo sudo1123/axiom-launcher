@@ -1,16 +1,15 @@
 '''== 配置文件默认内容 == '''
 TEMPLATES={
 "config.json":{
-    "config_version": 1,
+    "config_version": 2,
 
     "launcher": {
         "name": "Axiom Launcher",
-        "version": "0.3.0"
+        "version": "0.4.0"
     },
 
     "minecraft": {
-        "directory": r"C:\path\to\.minecraft",
-        "selected_version": "1.20.1"
+        "selected_instance": ""
     },
 
     "java": {

@@ -17,6 +17,7 @@
 import accounts.offline
 import accounts.manager
 from pathlib import Path
+from core.instance_manager import InstanceManager
 import json
 import subprocess
 import platform
@@ -369,7 +370,7 @@ def launch_minecraft(command):
 class Launcher:
 
     def __init__(self):
-        pass
+        self.instance_manager = InstanceManager()
 
     def start(self):
         #配置文件加载
@@ -380,7 +381,18 @@ class Launcher:
         self.runtime_context=runtime_context_load()
         self.launch_context=launch_context_load(self.CONFIG_DIR/"launch_context.json")
         self.account_config=account_load(self.CONFIG_DIR/"accounts.json")
+        self.instance_id = self.config["minecraft"]["selected_instance"]
+        instance_config = self.instance_manager.load_instance(self.instance_id)
 
+        #兼容旧函数（使用实例管理类动态加载实例信息）
+        self.config["minecraft"]["selected_version"] = instance_config["version"]
+        self.config["minecraft"]["directory"] = (
+                self.instance_manager.instances_path
+                / self.instance_id
+                / ".minecraft"
+            )
+        self.instance_type = instance_config["type"]
+        
         #启动前检查
         if not java_validity_check(self.config):
             return
