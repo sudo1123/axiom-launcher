@@ -64,14 +64,15 @@ Axiom Launcher
         version = input("请输入Minecraft版本:\n>")
 
         instance_type = input("请输入实例类型(vanilla/fabric/forge):\n>")
+        try:
 
-        self.instance_manager.create_instance(
-        instance_id,
-        version,
-        instance_type
-        )
+            self.instance_manager.create_instance(
+            instance_id,
+            version,
+            instance_type
+            )
 
-        print(f'''
+            print(f'''
 ====================
 实例创建成功
 ====================
@@ -85,8 +86,11 @@ ID:
 类型:
 {instance_type}
 
-按ENTER返回
-             ''' )
+            ''' )
+            input("按ENTER返回")
+        except FileExistsError as e:
+            print(f"创建失败: {e}")
+            input("按ENTER返回")
 
 
     def instance_menu_loop(self):
@@ -165,6 +169,3 @@ ID:
 
             elif choice == "2":
                 self.instance_menu_loop()
-
-test=CLI()
-test.run()
