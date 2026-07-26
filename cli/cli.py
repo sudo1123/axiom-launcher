@@ -1,3 +1,20 @@
+# Axiom Launcher - a third-party Minecraft: Java Edition launcher
+# Copyright (C) 2026  Felix Qu
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 from core.instance_manager import InstanceManager
 from core.launcher import Launcher
 from core.config_manager import ConfigManager
@@ -35,7 +52,73 @@ Axiom Launcher
 请输入:
         """)
 
+    def create_instance(self):
+        print("""
+====================
+创建实例
+====================
+""")
 
+        instance_id = input("请输入实例ID:\n>")
+
+        version = input("请输入Minecraft版本:\n>")
+
+        instance_type = input("请输入实例类型(vanilla/fabric/forge):\n>")
+
+        self.instance_manager.create_instance(
+        instance_id,
+        version,
+        instance_type
+        )
+
+        print(f'''
+====================
+实例创建成功
+====================
+
+ID:
+{instance_id}
+
+版本:
+{version}
+
+类型:
+{instance_type}
+
+按ENTER返回
+             ''' )
+
+
+    def instance_menu_loop(self):
+        while True:
+            self.instance_menu()
+
+            choice = input(">")
+
+            if choice == "3":
+                break
+
+            elif choice == "1":
+                result = self.instance_manager.list_instances()
+
+                print(
+                """
+====================
+实例管理 : 实例列表
+====================
+"""
+                    )
+                index = 1
+
+                for item in result:
+                    print(f"{index}. {item.name}")
+                    index += 1
+
+                print("")
+                input("按ENTER回到上级菜单")
+
+            elif choice == "2":
+                self.create_instance()
 
     def run(self):
         while True:
@@ -81,26 +164,7 @@ Axiom Launcher
                         continue
 
             elif choice == "2":
-                while True:
-                    self.instance_menu()
-                    choice = input(">")
-                    if choice == "3":
-                        break
-                    if choice == "1":
-                        result=self.instance_manager.list_instances()
-                        print("""
-====================
-实例管理 : 实例列表
-====================
-                                """)
-                        print()
-                        index=1
-                        for item in result:
-                            print(f"{str(index)}. {item.name}")
-                            index+=1
-                        print("")
-                        input("按ENTER回到上级菜单")
-
+                self.instance_menu_loop()
 
 test=CLI()
 test.run()

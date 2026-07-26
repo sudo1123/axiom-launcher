@@ -68,15 +68,15 @@ class InstanceManager():
     def create_instance(self,id,version,instance_type):
         result=self.list_instances()
         instance_exist=False
-        current_instance_folder_path=None
         for item in result:
             if id == item.name:
                 instance_exist=True
-                current_instance_folder_path=item
                 break
         if instance_exist:
             raise FileExistsError("同名实例已存在")
         instance_path=Path(self.instances_path) / id
+        if instance_path.exists():
+            raise FileExistsError("实例目录已存在")
         (instance_path).mkdir(parents=True)
         with open(instance_path / "instance.json","w",encoding="utf-8") as ij :
             content={"id":id,
