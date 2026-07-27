@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from pathlib import Path
 import json
 import shutil
@@ -64,6 +65,15 @@ class InstanceManager():
                 instance_json=json.load(ij)
 
             return instance_json
+        raise FileNotFoundError("实例不存在")
+    
+    def get_instance_path(self, instance_id):
+        result = self.list_instances()
+
+        for item in result:
+            if instance_id == item.name:
+                return item
+
         raise FileNotFoundError("实例不存在")
 
     def create_instance(self,id,version,instance_type):

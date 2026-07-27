@@ -21,3 +21,4 @@ data/*
 
 # ===== Test =====
 test.py
+test/*

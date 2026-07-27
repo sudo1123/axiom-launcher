@@ -18,12 +18,16 @@
 from core.instance_manager import InstanceManager
 from core.launcher import Launcher
 from core.config_manager import ConfigManager
+from core.minecraft_installer import MinecraftInstaller
 
 class CLI():
     def __init__(self):
         self.instance_manager = InstanceManager()
         self.config_manager = ConfigManager()
         self.launcher = Launcher()
+        self.minecraft_installer = MinecraftInstaller(
+        self.instance_manager
+    )
 
     def main_menu(self):
         print(
@@ -72,6 +76,16 @@ Axiom Launcher
             version,
             instance_type
             )
+            if instance_type == "vanilla":
+                choice = input(
+                    "是否安装Minecraft? (y/n)\n>"
+                )
+
+                if choice.lower() == "y":
+                    self.minecraft_installer.install(
+                        instance_id,
+                        version
+                    )
 
             print(f'''
 ====================
