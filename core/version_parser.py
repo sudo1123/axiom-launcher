@@ -28,3 +28,10 @@ class VersionParser():
             version_json=json.load(jp)
         url = version_json["downloads"]["client"]["url"]
         return url
+
+    def get_libraries(self,json_path):
+        with open (json_path,"r",encoding="utf-8") as jp:
+            version_json=json.load(jp)
+        libraries=version_json["libraries"]
+        return libraries
+    

@@ -18,6 +18,8 @@ from core.downloader import Downloader
 from core.version_manager import VersionManager
 from core.instance_manager import InstanceManager
 from core.version_parser import VersionParser
+from core.runtime_context import RuntimeContext
+from core.library_manager import LibraryManager
 
 
 class MinecraftInstaller:
@@ -26,7 +28,25 @@ class MinecraftInstaller:
         self.instance_manager = InstanceManager()
         self.version_manager = VersionManager()
         self.downloader = Downloader()
-        self.version_parser= VersionParser()
+        self.version_parser = VersionParser()
+        runtime_context = RuntimeContext().to_dict()
+        self.library_manager = LibraryManager(runtime_context)
+
+    def download_libraries(self, artifacts, instance_path):
+
+        for artifact in artifacts:
+
+            target_path = (
+                instance_path
+                / ".minecraft"
+                / "libraries"
+                / artifact["path"]
+            )
+
+            self.downloader.download(
+                artifact["url"],
+                target_path
+            )
 
 
     def install(self, instance_id, version):
@@ -42,4 +62,15 @@ class MinecraftInstaller:
         client_url=self.version_parser.get_client_url(download_path)
         download_path=instance_path / ".minecraft" / "versions" / str(version) / f"{version}.jar"
         self.downloader.download(client_url,download_path)
+        # == 下载普通库 ==
+        version_json_path = instance_path / ".minecraft" / "versions" / str(version) / f"{version}.json"
+        libraries=self.version_parser.get_libraries(version_json_path)       
+        filtered_libraries=self.library_manager.filter_libraries(libraries)
+        artifacts_list=self.library_manager.get_artifacts(filtered_libraries)
+
+        self.download_libraries(
+            artifacts_list,
+            instance_path
+        )
+    
         print("安装完毕")

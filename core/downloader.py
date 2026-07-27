@@ -26,6 +26,8 @@ class Downloader():
         folder_path.mkdir(parents=True)
     
     def download(self,url,target_path):
+        if Path(target_path).is_file(): #跳过重复下载
+            return
         self.ensure_target_path(target_path)
 
         with urlopen(url) as response:
