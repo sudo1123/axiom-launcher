@@ -34,4 +34,10 @@ class VersionParser():
             version_json=json.load(jp)
         libraries=version_json["libraries"]
         return libraries
+
+    def get_asset_index(self,json_path):
+        with open (json_path,"r",encoding="utf-8") as jp:
+            version_json=json.load(jp)
+        asset_index=version_json["assetIndex"]
+        return asset_index
     

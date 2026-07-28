@@ -18,16 +18,16 @@
 from core.instance_manager import InstanceManager
 from core.launcher import Launcher
 from core.config_manager import ConfigManager
-from core.minecraft_installer import MinecraftInstaller
+# from core.minecraft_installer import MinecraftInstaller
 
 class CLI():
     def __init__(self):
         self.instance_manager = InstanceManager()
         self.config_manager = ConfigManager()
         self.launcher = Launcher()
-        self.minecraft_installer = MinecraftInstaller(
-        self.instance_manager
-    )
+    #     self.minecraft_installer = MinecraftInstaller(
+    #     self.instance_manager
+    # )
 
     def main_menu(self):
         print(
