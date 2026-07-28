@@ -57,7 +57,14 @@ class RuleChecker:
 
 
     def check_features(self, feature_rule):
-        pass        #检查是否匹配特性，目前不重要暂时留空
+        """检查 features 条件：feature_rule 中的每一项都需与上下文中 features 的值匹配"""
+        context_features = self.runtime_context.get("features", {})
+        for key, expected_value in feature_rule.items():
+            if key not in context_features:
+                return False
+            if context_features[key] != expected_value:
+                return False
+        return True
 
 
     def check_rules(self, rule_list):
