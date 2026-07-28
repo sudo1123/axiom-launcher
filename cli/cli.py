@@ -18,16 +18,14 @@
 from core.instance_manager import InstanceManager
 from core.launcher import Launcher
 from core.config_manager import ConfigManager
-# from core.minecraft_installer import MinecraftInstaller
+from core.minecraft_installer import MinecraftInstaller
 
 class CLI():
     def __init__(self):
         self.instance_manager = InstanceManager()
         self.config_manager = ConfigManager()
         self.launcher = Launcher()
-    #     self.minecraft_installer = MinecraftInstaller(
-    #     self.instance_manager
-    # )
+        self.minecraft_installer = MinecraftInstaller()
 
     def main_menu(self):
         print(
@@ -51,8 +49,9 @@ Axiom Launcher
 
 1. 查看实例
 2. 创建实例
-3. 删除实例
-4. 返回
+3. 安装实例
+4. 删除实例
+5. 返回
 
 请输入:
         """)
@@ -82,10 +81,14 @@ Axiom Launcher
                 )
 
                 if choice.lower() == "y":
-                    self.minecraft_installer.install(
-                        instance_id,
-                        version
-                    )
+                    try:
+                        self.minecraft_installer.install(
+                            instance_id,
+                            version
+                        )
+                    except Exception as e:
+                        print(f"安装遇到问题: {e}")
+                        return
 
             print(f'''
 ====================
@@ -114,7 +117,7 @@ ID:
 
             choice = input(">")
 
-            if choice == "4":
+            if choice == "5":
                 break
 
             elif choice == "1":
@@ -154,9 +157,99 @@ ID:
 
             elif choice == "2":
                 self.create_instance()
-            elif choice == "3":
-                self.delete_instance()
 
+            elif choice == "3":
+                self.install_instance()
+
+            elif choice == "4":
+                self.delete_instance()
+    def install_instance(self):
+        print("""
+====================
+安装实例
+====================
+        """)
+
+        result = self.instance_manager.list_instances()
+
+        if not result:
+            print("暂无实例")
+            input("按ENTER返回")
+            return
+
+        instance_name_dic = {}
+
+        index = 1
+
+        for item in result:
+            print(f"{index}. {item.name}")
+            instance_name_dic[str(index)] = item.name
+            index += 1
+
+        choice = input("请选择安装的实例:\n>")
+
+        if choice not in instance_name_dic:
+            print("选择无效")
+            input("按ENTER返回")
+            return
+
+        instance_id = instance_name_dic[choice]
+
+        instance_config = self.instance_manager.load_instance(instance_id)
+
+        instance_type = instance_config["type"]
+        version = instance_config["version"]
+
+        if instance_type != "vanilla":
+            print(
+                f"暂不支持安装类型: {instance_type}"
+            )
+            input("按ENTER返回")
+            return
+
+        print(
+    f"""
+====================
+开始安装
+====================
+
+实例:
+{instance_id}
+
+版本:
+{version}
+
+    """
+        )
+
+        try:
+            self.minecraft_installer.install(
+                instance_id,
+                version
+            )
+
+            print(
+    """
+====================
+安装完成
+====================
+    """
+            )
+
+        except Exception as e:
+            print(
+    f"""
+====================
+安装失败
+====================
+
+错误:
+{e}
+
+    """
+            )
+
+        input("按ENTER返回")
 
 
 
@@ -269,7 +362,7 @@ Minecraft版本:
 )
                         self.launcher.start()
                         input("Minecraft已退出，按ENTER返回主菜单")
-                        return
+                        break
                         
                     else:
                         continue

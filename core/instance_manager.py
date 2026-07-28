@@ -92,7 +92,8 @@ class InstanceManager():
         with open(instance_path / "instance.json","w",encoding="utf-8") as ij :
             content={"id":id,
                      "version":version,
-                     "type":instance_type}
+                     "type":instance_type,
+                     "installation_status": "not_installed"}
             json.dump(content,
                       ij,
                       ensure_ascii=False,
@@ -116,3 +117,14 @@ class InstanceManager():
             raise FileNotFoundError("实例不存在")
 
         shutil.rmtree(instance_path)
+
+    def set_installation_status(self,instance_id,status):
+        instance_json_path=self.instances_path / instance_id / "instance.json"
+        with open (instance_json_path,"r",encoding="utf-8") as ij:
+            instance_json=json.load(ij)
+        instance_json["installation_status"] = status
+        with open (instance_json_path,"w",encoding="utf-8") as ij:
+            json.dump(instance_json,
+                      ij,
+                      indent=4,
+                      ensure_ascii=False)

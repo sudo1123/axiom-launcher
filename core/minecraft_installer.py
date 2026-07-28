@@ -59,27 +59,33 @@ class MinecraftInstaller:
     def install(self, instance_id, version):
         print(f"开始安装 Minecraft {version}")
         print(f"目标实例: {instance_id}")
+        self.instance_manager.set_installation_status(instance_id,"installing") #修改实例安装状态
+
         # == 下载版本json ==
+        print("开始下载版本json")
         version_dic=self.version_manager.get_version(version)
         version_url=version_dic["url"]
         self.instance_path=self.instance_manager.get_instance_path(instance_id)
         download_path=self.instance_path / ".minecraft" / "versions" / str(version) / f"{version}.json" 
         self.downloader.download(version_url,download_path)
+        print("下载版本json完毕")
         # == 下载客户端 ==
+        print("开始下载客户端")
         client_url=self.version_parser.get_client_url(download_path)
         download_path=self.instance_path / ".minecraft" / "versions" / str(version) / f"{version}.jar"
         self.downloader.download(client_url,download_path)
+        print("下载客户端完毕")
         # == 下载普通库 ==
+        print("开始下载普通库")
         self.version_json_path = self.instance_path / ".minecraft" / "versions" / str(version) / f"{version}.json"
         libraries=self.version_parser.get_libraries(self.version_json_path)       
         filtered_libraries=self.library_manager.filter_libraries(libraries)
         artifacts_list=self.library_manager.get_artifacts(filtered_libraries)
-
         self.download_libraries(
             artifacts_list,
             self.instance_path
         )
-
+        print("普通库下载完毕")
         # == 从版本json提取assetIndex ==
         asset_index_info=self.version_parser.get_asset_index(self.version_json_path)
         asset_index_url=asset_index_info["url"]
@@ -90,6 +96,9 @@ class MinecraftInstaller:
             asset_index_url,
             asset_index_path)
         # == 下载asset objects ==
+        print("开始下载资产（“用时可能会比较久，请耐心等待”）")
         self.download_asset_objects(asset_index_path)
+        print("资产下载完毕")
 
+        self.instance_manager.set_installation_status(instance_id,"installed") #修改实例安装状态
         print("安装完毕")
