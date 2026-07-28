@@ -1,4 +1,3 @@
-```markdown README.md
 # Axiom Launcher
 
 一个用 Python 编写的第三方 Minecraft: Java Edition 启动器（离线模式）。
