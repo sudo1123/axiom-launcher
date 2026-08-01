@@ -19,6 +19,7 @@ from core.instance_manager import InstanceManager
 from core.launcher import Launcher
 from core.config_manager import ConfigManager
 from core.minecraft_installer import MinecraftInstaller
+from core.source_manager import SourceManager
 
 class CLI():
     def __init__(self):
@@ -323,6 +324,64 @@ Minecraft版本:
                 print(e)
 
         input("按ENTER返回")
+    def settings_menu_loop(self):
+        while True:
+            print("""
+====================
+设置
+====================
+
+1. 查看当前下载源
+2. 切换下载源
+3. 返回
+
+请输入:
+            """)
+            choice = input(">")
+
+            if choice == "3":
+                break
+            elif choice == "1":
+                self.show_download_source()
+            elif choice == "2":
+                self.change_download_source()
+
+    def show_download_source(self):
+        selected = self.config_manager.get_selected_download_source()
+        display_name = SourceManager.SUPPORTED_SOURCES.get(selected, selected)
+        print(f"""
+====================
+当前下载源
+====================
+
+配置值: {selected}
+显示名: {display_name}
+""")
+        input("按ENTER返回")
+
+    def change_download_source(self):
+        print("""
+====================
+切换下载源
+====================
+""")
+        index = 1
+        source_map = {}
+        for key, display_name in SourceManager.SUPPORTED_SOURCES.items():
+            print(f"{index}. {key} ({display_name})")
+            source_map[str(index)] = key
+            index += 1
+
+        choice = input("请选择下载源:\n>")
+
+        if choice in source_map:
+            self.config_manager.set_selected_download_source(source_map[choice])
+            print("下载源已切换")
+        else:
+            print("选择无效")
+
+        input("按ENTER返回")
+
 
     def run(self):
         while True:
@@ -369,3 +428,5 @@ Minecraft版本:
 
             elif choice == "2":
                 self.instance_menu_loop()
+            elif choice == "3":
+                self.settings_menu_loop()

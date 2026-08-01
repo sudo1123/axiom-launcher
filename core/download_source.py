@@ -16,6 +16,10 @@
 
 #注意，这只是一个抽象类，用于定义此后接入的下载源应提供的方法和属性，请勿调用此类
 class DownloadSource:
-
+    # 下载源显示名（供界面/CLI 展示）
+    source_name = "未知下载源"
+    def get_source_notice(self):
+        raise NotImplementedError
+    
     def get_asset_base_url(self):
         raise NotImplementedError

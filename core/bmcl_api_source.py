@@ -15,8 +15,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from core.download_source import DownloadSource
 class BMCLAPISource(DownloadSource):
+    source_name = "BMCLAPI"
     def __init__(self):
         pass
+
+    def get_source_notice(self):
+        return "下载来源: BMCLAPI 镜像源 (https://bmclapi2.bangbang93.com)"
 
     def get_asset_base_url(self):
         asset_url_prefix="https://bmclapi2.bangbang93.com/assets"

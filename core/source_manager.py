@@ -18,6 +18,11 @@ from core.config_manager import ConfigManager
 from core.mojang_source import MojangSource
 from core.bmcl_api_source import BMCLAPISource
 class SourceManager:
+    # 受支持的下载源: key 为配置文件取值, value 为显示名
+    SUPPORTED_SOURCES = {
+        "mojang": "Mojang 官方源",
+        "bmclapi": "BMCLAPI"
+    }
     def __init__(self):
         self.config_manager=ConfigManager()
     def get_download_source(self):

@@ -15,8 +15,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from core.download_source import DownloadSource
 class MojangSource(DownloadSource):
+    source_name = "Mojang 官方源"
+
     def __init__(self):
         pass
+
+    def get_source_notice(self):
+        return "下载来源: Mojang 官方源 (https://www.minecraft.net)"
 
     def get_asset_base_url(self):
         asset_url_prefix="https://resources.download.minecraft.net"

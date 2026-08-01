@@ -93,6 +93,7 @@ class MinecraftInstaller:
     def install(self, instance_id, version):
         print(f"开始安装 Minecraft {version}")
         print(f"目标实例: {instance_id}")
+        print(self.asset_manager.download_source.get_source_notice())
         self.instance_manager.set_installation_status(instance_id,"installing") #修改实例安装状态
 
         # == 下载版本json ==
