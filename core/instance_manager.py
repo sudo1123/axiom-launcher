@@ -93,7 +93,8 @@ class InstanceManager():
             content={"id":id,
                      "version":version,
                      "type":instance_type,
-                     "installation_status": "not_installed"}
+                     "installation_status": "not_installed",
+                     "java_path":None}
             json.dump(content,
                       ij,
                       ensure_ascii=False,
@@ -128,3 +129,11 @@ class InstanceManager():
                       ij,
                       indent=4,
                       ensure_ascii=False)
+
+    def get_instance_java_path(self,instance_id):
+        instance_json_path=self.instances_path / instance_id / "instance.json"
+        with open (instance_json_path,"r",encoding="utf-8") as ij:
+            instance_json=json.load(ij)
+
+        result=instance_json["json_path"]
+        return result

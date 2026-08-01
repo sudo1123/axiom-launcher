@@ -41,3 +41,8 @@ class VersionParser():
         asset_index=version_json["assetIndex"]
         return asset_index
     
+    def get_major_version(self,json_path):
+        with open (json_path,"r",encoding="utf-8") as jp:
+            version_json=json.load(jp)
+        major_version=version_json["javaVersion"]["majorVersion"]
+        return  major_version
