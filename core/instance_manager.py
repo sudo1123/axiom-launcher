@@ -135,5 +135,5 @@ class InstanceManager():
         with open (instance_json_path,"r",encoding="utf-8") as ij:
             instance_json=json.load(ij)
 
-        result=instance_json["json_path"]
+        result=instance_json["java_path"]
         return result

@@ -17,11 +17,11 @@
 '''== 配置文件默认内容 == '''
 TEMPLATES={
 "config.json":{
-    "config_version": 3,
+    "config_version": 4,
 
     "launcher": {
         "name": "Axiom Launcher",
-        "version": "0.7.0"
+        "version": "0.8.0"
     },
 
     "minecraft": {
@@ -29,7 +29,6 @@ TEMPLATES={
     },
 
     "java": {
-        "path": r"C:\path\to\java.exe",
         "memory": {
             "min": 1024,
             "max": 4096

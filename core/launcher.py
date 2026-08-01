@@ -22,6 +22,7 @@ from core.runtime_context import RuntimeContext
 from core.config_manager import ConfigManager
 from core.library_manager import LibraryManager
 from core.rule_checker import RuleChecker
+from core.java_manager import JavaManager
 import json
 import subprocess
 import os
@@ -42,24 +43,7 @@ def launch_context_load(path):
 def account_load(path):
     return _safe_json_load(path, "account")
 
-'''== JAVA环境检查 =='''
-
-def java_validity_check(config):
-    java_path=config["java"]["path"]
-    if isinstance(java_path,str):
-        try:
-            result=subprocess.run ([java_path,"--version"],capture_output=True,text=True)
-            if result.returncode == 0:
-                print("Java is available")
-                print(f"当前Java版本:{result.stdout}")
-                return True
-            else:
-                        return False
-        except FileNotFoundError:
-             return False
-
-    else:
-        return False
+'''== JAVA环境检查 == 已迁移至 core.java_manager.JavaManager =='''
 
 '''== Minecraft完整性检查 =='''
 
@@ -271,6 +255,7 @@ class Launcher:
     def __init__(self):
         self.instance_manager = InstanceManager()
         self.config_manager = ConfigManager()
+        self.java_manager = JavaManager()
 
     def start(self):
         #配置文件加载
@@ -293,7 +278,13 @@ class Launcher:
         self.instance_type = instance_config["type"]
         
         #启动前检查
-        if not java_validity_check(self.config):
+        java_path = self.java_manager.find_java(self.instance_id)
+        if java_path is None:
+            print("实例未配置 Java 路径，无法启动")
+            return
+        ok, required = self.java_manager.check_java(self.instance_id, java_path)
+        if not ok:
+            print(f"Java 版本不匹配：需要 Java {required}，无法启动")
             return
         if not minecraft_validity_check(self.config):
             return
@@ -336,7 +327,7 @@ class Launcher:
             argument_context=argument_context_load(self.config,version_json,classpath_string,auth_context)
             filtered_game_arguments=arguments_replace(filtered_game_arguments,argument_context)
             filtered_jvm_arguments=arguments_replace(filtered_jvm_arguments,argument_context)
-            command = build_launch_command(self.config["java"]["path"],filtered_jvm_arguments,mainclass,filtered_game_arguments)
+            command = build_launch_command(java_path,filtered_jvm_arguments,mainclass,filtered_game_arguments)
 
         #启动Minecraft
             launch_minecraft(command)
