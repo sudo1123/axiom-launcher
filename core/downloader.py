@@ -61,7 +61,7 @@ class Downloader():
             try:
                 response = requests.get(
                     url,
-                    timeout=10,
+                    timeout=30,
                     headers=self.headers,
                     stream=True             #启用流式传输
                 )

@@ -74,3 +74,25 @@ class ConfigManager():
         config["minecraft"]["selected_instance"] = instance_id
 
         self.save_config(config)
+
+    def get_selected_download_source(self):
+        """
+        获取当前选择的下载源
+        """
+        config = self.load_config()
+        selected_source=config["download"]["selected_source"]
+
+        return selected_source
+    
+    
+    
+    def set_selected_download_source(self, source_name: str):
+        """
+        修改当前选择的下载源
+        """
+
+        config = self.load_config()
+
+        config["download"]["selected_source"] = source_name
+
+        self.save_config(config)

@@ -14,10 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from pathlib import Path
+from core.source_manager import SourceManager
 import json
 class AssetManager():
     def __init__(self):
-        self.asset_url_prefix="https://resources.download.minecraft.net"
+        self.source_manager=SourceManager()
+        self.download_source=self.source_manager.get_download_source()
+        self.asset_url_prefix=self.download_source.get_asset_base_url()
         self.asset_local_path_prefix = Path(".minecraft") / "assets" / "objects"
     def get_objects_list(self,asset_index_path,instance_path):
         with open (asset_index_path,"r",encoding="utf-8") as ai:
