@@ -137,3 +137,14 @@ class InstanceManager():
 
         result=instance_json["java_path"]
         return result
+    
+    def update_instance_java_path(self,instance_id,instance_java_path):
+        instance_json_path=self.instances_path / instance_id / "instance.json"
+        with open (instance_json_path,"r",encoding="utf-8") as ij:
+            instance_json=json.load(ij)
+        instance_json["java_path"] = str(instance_java_path)
+        with open (instance_json_path,"w",encoding="utf-8") as ij:
+            json.dump(instance_json,
+                        ij,
+                        indent=4,
+                        ensure_ascii=False)

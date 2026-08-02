@@ -278,15 +278,10 @@ class Launcher:
         self.instance_type = instance_config["type"]
         
         #启动前检查
-        java_path = self.java_manager.find_java(self.instance_id)
-        if java_path is None:
-            print("实例未配置 Java 路径，无法启动")
-            return
-        ok, required = self.java_manager.check_java(self.instance_id, java_path)
-        if not ok:
-            print(f"Java 版本不匹配：需要 Java {required}，无法启动")
-            return
-        if not minecraft_validity_check(self.config):
+        try:
+            java_path = self.java_manager.find_java(self.instance_id)
+        except (ValueError, KeyError, FileNotFoundError) as e:
+            print(f"Java 环境检查失败: {e}")
             return
 
         #启动准备
