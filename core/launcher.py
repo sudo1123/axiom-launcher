@@ -190,6 +190,13 @@ def argument_context_load(config, version_json, classpath_string ,auth_context):
 
         "classpath":classpath_string,
 
+        "natives_directory": str(
+            Path(config["minecraft"]["directory"])
+            / "versions"
+            / config["minecraft"]["selected_version"]
+            / f'{config["minecraft"]["selected_version"]}-natives'
+        ),
+
 
         "launcher_name":
             config["launcher"]["name"],
@@ -323,7 +330,9 @@ class Launcher:
             filtered_game_arguments=arguments_replace(filtered_game_arguments,argument_context)
             filtered_jvm_arguments=arguments_replace(filtered_jvm_arguments,argument_context)
             command = build_launch_command(java_path,filtered_jvm_arguments,mainclass,filtered_game_arguments)
-
+            # """注意注意！调试代码"""
+            # print(command)
+            # "调试代码结束"
         #启动Minecraft
             launch_minecraft(command)
         else:

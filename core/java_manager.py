@@ -80,7 +80,7 @@ class JavaManager:
         
 
     def get_java_version(self,java_path):
-        result=subprocess.run ([java_path,"--version"],
+        result=subprocess.run ([java_path,"-version"],  #注意：这里不使用--version是为了兼容java8
                                capture_output=True,
                                text=True,
                                timeout=5)

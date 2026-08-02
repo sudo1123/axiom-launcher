@@ -45,3 +45,23 @@ class LibraryManager:
                     artifacts.append(downloads["artifact"])
 
         return artifacts
+
+    def get_native_libraries(self, filtered_libraries, os_name):
+        result = []
+        for library in filtered_libraries:
+            downloads = library.get("downloads", {})
+            classifiers = downloads.get("classifiers", {})
+            if not classifiers:          # 新版本：natives jar 已是独立 artifact，跳过
+                continue
+
+            # 旧版本：classifiers 键名形如 natives-windows / natives-linux / natives-osx
+            # 按当前 OS 映射到目标键名
+            target_key = f"natives-{os_name}"   # os_name 为 windows/linux/osx
+            if target_key in classifiers:
+                obj = classifiers[target_key]
+                result.append({
+                    "url": obj["url"],
+                    "name": library.get("name"),
+                    "extract": library.get("extract",{}),   # 解压排除规则(部分库有)
+                })
+        return result
