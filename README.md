@@ -32,72 +32,92 @@
    git clone <your-repo-url>
    cd axiom-launcher
    pip install requests
+   ```
 
+2. 运行初始化脚本，自动生成所需目录和默认配置文件：
+   ```bash
+   python setup.py
+   ```
+   这会在项目目录下创建 `configs/`、`instances/`、`launcher_logs/`、`data/` 文件夹，并生成三个带默认值的配置文件：
+   - `configs/config.json` — 通用配置（启动器信息、内存、分辨率、下载源等）
+   - `configs/accounts.json` — 离线账号配置（默认账号 "Steve"）
+   - `configs/launch_context.json` — 启动参数上下文（features 开关）
 
-运行初始化脚本，自动生成所需目录和默认配置文件：
+3. 运行启动器并通过 CLI 菜单创建实例：
+   ```bash
+   python main.py
+   ```
+   - 选择「**实例管理**」→「**创建实例**」
+   - 输入实例 ID、Minecraft 版本号（如 `1.21.4`）、实例类型（`vanilla`）
+   - 提示「是否安装 Minecraft?」时选择 **y**
+   - 等待自动下载完成即可
 
-python setup.py
+4. 返回主菜单，选择「**启动游戏**」→ 选择实例即可启动
+   - 若系统缺少实例所需的 Java 版本，程序会提示并询问是否自动下载
 
-这会在项目目录下创建 configs/、instances/、launcher_logs/、data/ 文件夹，并生成三个带默认值的配置文件：
+## CLI 菜单
 
-configs/config.json — 通用配置（启动器信息、内存、分辨率、下载源等）
-configs/accounts.json — 离线账号配置（默认账号 "Steve"）
-configs/launch_context.json — 启动参数上下文（features 开关）
-运行启动器并通过 CLI 菜单创建实例：
-
-python main.py
-
-选择「实例管理」→「创建实例」
-输入实例 ID、Minecraft 版本号（如 1.21.4）、实例类型（vanilla）
-提示「是否安装 Minecraft?」时选择 y
-等待自动下载完成即可
-返回主菜单，选择「启动游戏」→ 选择实例即可启动
-
-若系统缺少实例所需的 Java 版本，程序会提示并询问是否自动下载
-CLI 菜单
 主菜单：
 
-选项	说明
-1. 启动游戏	选择实例并启动
-2. 实例管理	查看 / 创建 / 安装 / 删除实例
-3. 设置	查看 / 切换下载源
-4. 退出	退出程序
+| 选项 | 说明 |
+|------|------|
+| `1. 启动游戏` | 选择实例并启动 |
+| `2. 实例管理` | 查看 / 创建 / 安装 / 删除实例 |
+| `3. 设置` | 查看 / 切换下载源 |
+| `4. 退出` | 退出程序 |
+
 实例管理：
 
-选项	说明
-1. 查看实例	查看实例详细信息（ID、版本、类型、路径）
-2. 创建实例	创建新实例，可附带安装 Minecraft
-3. 安装实例	为已创建但未安装的实例安装 Minecraft
-4. 删除实例	删除指定实例（含其 .minecraft 目录）
+| 选项 | 说明 |
+|------|------|
+| `1. 查看实例` | 查看实例详细信息（ID、版本、类型、路径） |
+| `2. 创建实例` | 创建新实例，可附带安装 Minecraft |
+| `3. 安装实例` | 为已创建但未安装的实例安装 Minecraft |
+| `4. 删除实例` | 删除指定实例（含其 `.minecraft` 目录） |
+
 设置：
 
-选项	说明
-1. 查看当前下载源	显示当前配置值与下载源名称
-2. 切换下载源	在 Mojang 官方源 / BMCLAPI 之间切换
-实例类型说明
-类型	自动安装	说明
-vanilla	✅ 支持	原版 Minecraft，可从所选下载源自动下载全部游戏文件
-fabric	❌ 预留	Fabric 加载器自动安装尚未实现，需自行放入加载器文件
-forge	❌ 预留	Forge 加载器自动安装尚未实现，需自行放入加载器文件
-下载源说明
-配置值	显示名	说明
-mojang	Mojang 官方源	从 Mojang 官方服务器下载（默认）
-bmclapi	BMCLAPI	BangBang93 提供的镜像源，中国大陆网络环境下通常更快
-下载源在 configs/config.json 的 download.selected_source 字段配置，也可通过 CLI 的「设置」菜单切换。
+| 选项 | 说明 |
+|------|------|
+| `1. 查看当前下载源` | 显示当前配置值与下载源名称 |
+| `2. 切换下载源` | 在 Mojang 官方源 / BMCLAPI 之间切换 |
 
-配置文件说明
-文件	用途	关键字段
-config.json	启动器主配置	launcher.name / launcher.version、minecraft.selected_instance、java.memory.min/max、game.resolution.width/height、game.fullscreen、download.selected_source
-accounts.json	账号配置	accounts[].id / type / username、selected
-launch_context.json	启动参数 features 开关	is_demo_user、has_custom_resolution、has_quick_plays_support、is_quick_play_* 等
-所有配置文件均可使用 python setup.py 生成带默认值的版本（已存在则跳过）。
+## 实例类型说明
 
-每个实例对应 instances/<id>/instance.json，记录：
+| 类型 | 自动安装 | 说明 |
+|------|----------|------|
+| **vanilla** | ✅ 支持 | 原版 Minecraft，可从所选下载源自动下载全部游戏文件 |
+| **fabric** | ❌ 预留 | Fabric 加载器自动安装尚未实现，需自行放入加载器文件 |
+| **forge** | ❌ 预留 | Forge 加载器自动安装尚未实现，需自行放入加载器文件 |
 
-id、version、type
-installation_status — 安装状态（not_installed / installing / installed）
-java_path — 该实例实际使用的 Java 可执行文件路径
-项目结构
+## 下载源说明
+
+| 配置值 | 显示名 | 说明 |
+|--------|--------|------|
+| `mojang` | Mojang 官方源 | 从 Mojang 官方服务器下载（默认） |
+| `bmclapi` | BMCLAPI | BangBang93 提供的镜像源，中国大陆网络环境下通常更快 |
+
+下载源在 `configs/config.json` 的 `download.selected_source` 字段配置，也可通过 CLI 的「设置」菜单切换。
+
+## 配置文件说明
+
+| 文件 | 用途 | 关键字段 |
+|------|------|----------|
+| `config.json` | 启动器主配置 | `launcher.name` / `launcher.version`、`minecraft.selected_instance`、`java.memory.min/max`、`game.resolution.width/height`、`game.fullscreen`、`download.selected_source` |
+| `accounts.json` | 账号配置 | `accounts[].id` / `type` / `username`、`selected` |
+| `launch_context.json` | 启动参数 features 开关 | `is_demo_user`、`has_custom_resolution`、`has_quick_plays_support`、`is_quick_play_*` 等 |
+
+所有配置文件均可使用 `python setup.py` 生成带默认值的版本（已存在则跳过）。
+
+每个实例对应 `instances/<id>/instance.json`，记录：
+
+- `id`、`version`、`type`
+- `installation_status` — 安装状态（`not_installed` / `installing` / `installed`）
+- `java_path` — 该实例实际使用的 Java 可执行文件路径
+
+## 项目结构
+
+```
 .
 ├── main.py                    # 入口文件
 ├── setup.py                   # 初始化脚本
@@ -135,23 +155,26 @@ java_path — 该实例实际使用的 Java 可执行文件路径
 ├── runtime/                   # 自动下载的 Java 运行时（JavaDownloader 生成）
 ├── test/                      # 测试代码
 └── launcher_logs/             # 启动器日志
+```
 
+## 项目状态
 
-项目状态
-当前版本：v0.10.0
+当前版本：**v0.10.0**
 
-✅ 离线模式完整启动流程（实例管理 → 版本检查 → 参数解析 → 启动游戏）
-✅ 多实例管理（创建、查看、安装、删除，含安装状态追踪）
-✅ 初始化脚本（自动生成目录和默认配置文件）
-✅ Minecraft 自动下载安装（版本 json、客户端 jar、依赖库、原生库、资源索引、资源文件）
-✅ 多下载源支持（Mojang 官方源 / BMCLAPI 镜像，可切换）
-✅ Java 自动查找与缺失时自动下载（Adoptium）
-✅ 原生库自动下载与解压
-❌ Fabric / Forge 加载器自动安装
-❌ Microsoft 正版登录
-协议
-本项目基于 GNU General Public License v3.0 开源。这意味着：
+- ✅ 离线模式完整启动流程（实例管理 → 版本检查 → 参数解析 → 启动游戏）
+- ✅ 多实例管理（创建、查看、安装、删除，含安装状态追踪）
+- ✅ 初始化脚本（自动生成目录和默认配置文件）
+- ✅ Minecraft 自动下载安装（版本 json、客户端 jar、依赖库、原生库、资源索引、资源文件）
+- ✅ 多下载源支持（Mojang 官方源 / BMCLAPI 镜像，可切换）
+- ✅ Java 自动查找与缺失时自动下载（Adoptium）
+- ✅ 原生库自动下载与解压
+- ❌ Fabric / Forge 加载器自动安装
+- ❌ Microsoft 正版登录
 
-任何人都可以自由使用、复制、修改、分发本项目
-但基于本项目二次开发的衍生作品，同样必须以 GPLv3 开源（即"传染性"/copyleft）
-分发时必须保留版权声明和协议全文
+## 协议
+
+本项目基于 [GNU General Public License v3.0](./LICENSE) 开源。这意味着：
+
+- 任何人都可以自由使用、复制、修改、分发本项目
+- 但基于本项目二次开发的衍生作品，同样必须以 GPLv3 开源（即"传染性"/copyleft）
+- 分发时必须保留版权声明和协议全文
