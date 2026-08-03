@@ -26,3 +26,7 @@ class MojangSource(DownloadSource):
     def get_asset_base_url(self):
         asset_url_prefix="https://resources.download.minecraft.net"
         return asset_url_prefix
+
+    def get_manifest_url(self):
+        mojang_manifest="https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
+        return mojang_manifest

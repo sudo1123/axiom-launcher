@@ -25,3 +25,7 @@ class BMCLAPISource(DownloadSource):
     def get_asset_base_url(self):
         asset_url_prefix="https://bmclapi2.bangbang93.com/assets"
         return asset_url_prefix
+
+    def get_manifest_url(self):
+        bmcl_api_manifest="https://bmclapi2.bangbang93.com/mc/game/version_manifest_v2.json"
+        return bmcl_api_manifest

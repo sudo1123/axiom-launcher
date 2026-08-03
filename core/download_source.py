@@ -23,3 +23,6 @@ class DownloadSource:
     
     def get_asset_base_url(self):
         raise NotImplementedError
+
+    def get_manifest_url(self):
+        raise NotImplementedError

@@ -137,8 +137,32 @@ def classpath_list_to_string(classpath_list):
     return classpath_string
 
 '''==  arguments解析 =='''
+def legacy_jvm_arguments_load():
+    #返回旧版默认JVM参数模版列表
+    """旧版(1.12.2及更早)的默认 JVM 参数模板。
+
+    旧版版本 JSON 不记录 JVM 参数，需由启动器自行生成。
+    这里提供最低必要项：原生库路径与 classpath。
+    """
+    return [
+        "-Djava.library.path=${natives_directory}",
+        "-cp",
+        "${classpath}",
+    ]
+
 def arguments_load(version_json,key:str):
-    return version_json["arguments"][key]
+    if "arguments" in version_json:           #新版格式
+        return version_json["arguments"][key]
+    else:#旧版本格式
+        if key == "game":                                    
+            minecraft_arguments=version_json["minecraftArguments"]
+            legacy_game_arguments=minecraft_arguments.split()
+            return legacy_game_arguments
+        if key == "jvm":
+            legacy_jvm_arguments=legacy_jvm_arguments_load()
+            return legacy_jvm_arguments
+
+
 
 # game_rules_check 已迁移至 core.rule_checker.RuleChecker
 # jvm_rules_check 已迁移至 core.rule_checker.RuleChecker
@@ -202,7 +226,9 @@ def argument_context_load(config, version_json, classpath_string ,auth_context):
             config["launcher"]["name"],
 
         "launcher_version":
-            config["launcher"]["version"]
+            config["launcher"]["version"],
+
+        "native_launcher_version": "0"    #用于替换旧版 minecraftArguments 末尾的 ${native_launcher_version} 占位符
     }
     template.update(auth_context) #使用账号系统生成的信息更新模板字典的值
     return template
@@ -225,7 +251,6 @@ def arguments_replace(arguments, context):
             result.append(argument)
 
     return result
-
 
 '''=== 启动参数构建和最终启动 ==='''
 def build_launch_command(
@@ -329,8 +354,16 @@ class Launcher:
             argument_context=argument_context_load(self.config,version_json,classpath_string,auth_context)
             filtered_game_arguments=arguments_replace(filtered_game_arguments,argument_context)
             filtered_jvm_arguments=arguments_replace(filtered_jvm_arguments,argument_context)
+
+            # ---- 注入 JVM 内存参数----
+            memory = self.config.get("java", {}).get("memory", {})
+            min_memory = memory.get("min", 1024)
+            max_memory = memory.get("max", 4096)
+            memory_arguments = [f"-Xms{min_memory}M", f"-Xmx{max_memory}M"]
+            filtered_jvm_arguments = filtered_jvm_arguments + memory_arguments
+
             command = build_launch_command(java_path,filtered_jvm_arguments,mainclass,filtered_game_arguments)
-            # """注意注意！调试代码"""
+            # """注意：调试代码"""
             # print(command)
             # "调试代码结束"
         #启动Minecraft
