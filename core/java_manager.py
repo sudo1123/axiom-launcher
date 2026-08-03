@@ -16,6 +16,9 @@
 
 from core.instance_manager import InstanceManager
 from core.version_parser import VersionParser
+from core.runtime_context import RuntimeContext
+from core.java_downloader import JavaDownloader
+
 import os
 from pathlib import Path
 import subprocess
@@ -24,7 +27,8 @@ class JavaManager:
     def __init__(self):
         self.instance_manager=InstanceManager()
         self.version_parser=VersionParser()
-
+        self.java_downloader=JavaDownloader()
+        
     def get_instance_java_version(self,instance_id):
         instance_path=self.instance_manager.get_instance_path(instance_id)
         instance_version=self.instance_manager.load_instance(instance_id)["version"]
@@ -135,3 +139,17 @@ class JavaManager:
                 java_paths.append(item)
 
         return java_paths
+
+    def download_java_for_instance(self,instance_id):
+            feature_version = self.get_instance_java_version(instance_id)
+    
+            rt = RuntimeContext()
+            program_dir = Path(__file__).resolve().parent.parent  
+            target_dir = program_dir / "runtime" / "java" / f"{feature_version}-{rt.os_name}-{rt.arch}"
+    
+            # 下载并解压，得到 java 可执行文件路径
+            java_exe = self.java_downloader.install(feature_version, target_dir)
+    
+            # 将路径写回实例
+            self.instance_manager.update_instance_java_path(instance_id, java_exe)
+            return java_exe

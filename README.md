@@ -7,70 +7,97 @@
 
 ## 功能
 
-- **多实例管理** — 创建、查看、删除多个独立实例，每个实例拥有隔离的 `.minecraft` 目录
-- **Minecraft 自动安装** — 一键从 Mojang 服务器下载版本 json、客户端 jar、依赖库及资源文件，无需手动放置任何游戏文件
+- **多实例管理** — 创建、查看、安装、删除多个独立实例，每个实例拥有隔离的 `.minecraft` 目录，并独立记录安装状态与 Java 路径
+- **Minecraft 自动安装** — 一键从所选下载源下载版本 json、客户端 jar、依赖库、原生库、资源索引及资源文件，无需手动放置任何游戏文件
+- **多下载源** — 内置 Mojang 官方源与 BMCLAPI 镜像源，可在「设置」菜单中随时切换，适应不同网络环境
+- **Java 自动管理** — 自动在 PATH 与系统常见安装位置查找 Java 并校验版本；缺失时可从 Adoptium API 自动下载对应版本 JDK
+- **原生库处理** — 自动下载并解压原生库（natives），正确应用解压排除规则
 - **离线账号系统** — 基于用户名生成确定性的离线 UUID（与官方启动器算法一致，兼容存档 / 皮肤缓存）
 - **启动前完整性检查** — 校验 Java 运行时、版本 json、jar 及依赖库是否齐全
-- **智能参数解析** — 解析版本 json 中的 JVM 参数与游戏参数，按操作系统和平台规则自动过滤
+- **智能参数解析** — 解析版本 json 中的 JVM 参数与游戏参数，按操作系统、平台与 features 规则自动过滤
 - **classpath 自动拼接** — 自动构建依赖库 classpath 并启动游戏进程
+- **版本清单缓存** — 自动缓存版本 manifest，超过 24 小时自动刷新
 
 ## 环境要求
 
 - Python 3.8+
-- 对应版本所需的 Java 运行时（需自行安装，推荐 Java 17+）
-- 网络连接（用于下载 Minecraft 游戏文件）
+- `requests` 依赖（`pip install requests`）
+- 网络连接（用于下载 Minecraft 游戏文件与 Java 运行时）
+- Java：非必需——启动器会自动查找系统 Java，缺失时可在启动流程中选择自动下载
 
 ## 快速开始
 
-1. 克隆本仓库
+1. 克隆本仓库并安装依赖
    ```bash
    git clone <your-repo-url>
    cd axiom-launcher
-   ```
+   pip install requests
 
-2. 运行初始化脚本，自动生成所需目录和默认配置文件：
-   ```bash
-   python setup.py
-   ```
-   这会在项目目录下创建 `configs/`、`instances/`、`launcher_logs/`、`data/` 文件夹，并生成三个带默认值的配置文件：
-   - `configs/config.json` — 通用配置（Java 路径、内存、分辨率等）
-   - `configs/accounts.json` — 离线账号配置（默认账号 "Steve"）
-   - `configs/launch_context.json` — 启动参数上下文
 
-3. 编辑 `configs/config.json`，将 `java.path` 修改为你的 Java 可执行文件路径。
+运行初始化脚本，自动生成所需目录和默认配置文件：
 
-4. 运行启动器并通过 CLI 菜单创建实例：
-   ```bash
-   python main.py
-   ```
-   - 选择「**实例管理**」→「**创建实例**」
-   - 输入实例 ID、Minecraft 版本号（如 `1.21.4`）、实例类型（`vanilla`）
-   - 提示「是否安装 Minecraft?」时选择 **y**
-   - 等待自动下载完成即可
+python setup.py
 
-5. 返回主菜单，选择「**启动游戏**」→ 选择实例即可启动
+这会在项目目录下创建 configs/、instances/、launcher_logs/、data/ 文件夹，并生成三个带默认值的配置文件：
 
-## 实例类型说明
+configs/config.json — 通用配置（启动器信息、内存、分辨率、下载源等）
+configs/accounts.json — 离线账号配置（默认账号 "Steve"）
+configs/launch_context.json — 启动参数上下文（features 开关）
+运行启动器并通过 CLI 菜单创建实例：
 
-| 类型 | 自动安装 | 说明 |
-|------|----------|------|
-| **vanilla** | ✅ 支持 | 原版 Minecraft，可从 Mojang 服务器自动下载全部游戏文件 |
-| **fabric** | ❌ 预留 | Fabric 加载器自动安装尚未实现，需自行放入加载器文件 |
-| **forge** | ❌ 预留 | Forge 加载器自动安装尚未实现，需自行放入加载器文件 |
+python main.py
 
-## 配置文件说明
+选择「实例管理」→「创建实例」
+输入实例 ID、Minecraft 版本号（如 1.21.4）、实例类型（vanilla）
+提示「是否安装 Minecraft?」时选择 y
+等待自动下载完成即可
+返回主菜单，选择「启动游戏」→ 选择实例即可启动
 
-| 文件 | 用途 | 关键字段 |
-|------|------|----------|
-| `config.json` | 启动器主配置 | `java.path`、`java.memory`、`minecraft.selected_instance`、`game.resolution` |
-| `accounts.json` | 离线账号 | `accounts[].username`、`selected` |
-| `launch_context.json` | 启动参数过滤 | `is_demo_user`、`has_custom_resolution` 等 features 开关 |
+若系统缺少实例所需的 Java 版本，程序会提示并询问是否自动下载
+CLI 菜单
+主菜单：
 
-所有配置文件均可使用 `python setup.py` 生成带默认值的版本。
+选项	说明
+1. 启动游戏	选择实例并启动
+2. 实例管理	查看 / 创建 / 安装 / 删除实例
+3. 设置	查看 / 切换下载源
+4. 退出	退出程序
+实例管理：
 
-## 项目结构
+选项	说明
+1. 查看实例	查看实例详细信息（ID、版本、类型、路径）
+2. 创建实例	创建新实例，可附带安装 Minecraft
+3. 安装实例	为已创建但未安装的实例安装 Minecraft
+4. 删除实例	删除指定实例（含其 .minecraft 目录）
+设置：
 
-```
+选项	说明
+1. 查看当前下载源	显示当前配置值与下载源名称
+2. 切换下载源	在 Mojang 官方源 / BMCLAPI 之间切换
+实例类型说明
+类型	自动安装	说明
+vanilla	✅ 支持	原版 Minecraft，可从所选下载源自动下载全部游戏文件
+fabric	❌ 预留	Fabric 加载器自动安装尚未实现，需自行放入加载器文件
+forge	❌ 预留	Forge 加载器自动安装尚未实现，需自行放入加载器文件
+下载源说明
+配置值	显示名	说明
+mojang	Mojang 官方源	从 Mojang 官方服务器下载（默认）
+bmclapi	BMCLAPI	BangBang93 提供的镜像源，中国大陆网络环境下通常更快
+下载源在 configs/config.json 的 download.selected_source 字段配置，也可通过 CLI 的「设置」菜单切换。
+
+配置文件说明
+文件	用途	关键字段
+config.json	启动器主配置	launcher.name / launcher.version、minecraft.selected_instance、java.memory.min/max、game.resolution.width/height、game.fullscreen、download.selected_source
+accounts.json	账号配置	accounts[].id / type / username、selected
+launch_context.json	启动参数 features 开关	is_demo_user、has_custom_resolution、has_quick_plays_support、is_quick_play_* 等
+所有配置文件均可使用 python setup.py 生成带默认值的版本（已存在则跳过）。
+
+每个实例对应 instances/<id>/instance.json，记录：
+
+id、version、type
+installation_status — 安装状态（not_installed / installing / installed）
+java_path — 该实例实际使用的 Java 可执行文件路径
+项目结构
 .
 ├── main.py                    # 入口文件
 ├── setup.py                   # 初始化脚本
@@ -78,16 +105,23 @@
 │   └── cli.py                 # 命令行交互界面
 ├── core/                      # 核心逻辑
 │   ├── launcher.py            # 游戏启动器（版本检查、参数解析、classpath 构建、进程启动）
-│   ├── instance_manager.py    # 多实例管理（创建/删除/查询）
+│   ├── instance_manager.py    # 多实例管理（创建/删除/查询、安装状态、Java 路径记录）
 │   ├── config_manager.py      # 配置文件加载与保存
-│   ├── version_manager.py     # 版本元数据管理（读取 manifest 获取版本信息）
-│   ├── version_parser.py      # 版本 json 解析（提取参数、库、资源索引等）
+│   ├── version_manager.py     # 版本 manifest 管理（缓存与 24h 自动刷新）
+│   ├── version_parser.py      # 版本 json 解析（提取参数、库、资源索引、Java 版本等）
 │   ├── library_manager.py     # 依赖库的规则过滤与路径管理
-│   ├── asset_manager.py       # 资源索引与资源对象管理
-│   ├── minecraft_installer.py # Minecraft 自动安装（版本 json、客户端 jar、依赖库、资源文件）
-│   ├── downloader.py          # 通用文件下载器（支持断点续传、重试、进度显示）
-│   ├── rule_checker.py        # 平台规则过滤（OS/arch）
-│   └── runtime_context.py     # 运行时上下文（平台信息等）
+│   ├── asset_manager.py       # 资源索引与资源对象管理（下载 URL 生成）
+│   ├── native_manager.py      # 原生库下载与解压
+│   ├── java_manager.py        # Java 查找、版本校验、缺失时自动下载
+│   ├── java_downloader.py     # 通过 Adoptium API 下载并解压对应版本 JDK
+│   ├── minecraft_installer.py # Minecraft 自动安装（6 步：json、jar、依赖库、原生库、资源索引、资源文件）
+│   ├── downloader.py          # 通用文件下载器（断点续传、重试、进度显示）
+│   ├── rule_checker.py        # 平台/features 规则过滤
+│   ├── runtime_context.py     # 运行时上下文（OS、架构、系统版本检测）
+│   ├── download_source.py     # 下载源抽象基类
+│   ├── mojang_source.py       # Mojang 官方下载源实现
+│   ├── bmcl_api_source.py     # BMCLAPI 镜像下载源实现
+│   └── source_manager.py      # 下载源管理器（按配置选择下载源）
 ├── accounts/                  # 账号系统
 │   ├── account.py             # 账号基类
 │   ├── offline.py             # 离线账号（UUID 生成）
@@ -95,28 +129,29 @@
 ├── setup/                     # 初始化模块
 │   ├── initializer.py         # 目录创建与配置文件初始化
 │   └── templates.py           # 配置文件默认模板
-├── configs/                   # 配置文件目录
+├── configs/                   # 配置文件目录（运行时生成）
 ├── instances/                 # 实例存储目录（每个实例一个子目录）
-├── data/                      # 元数据（如版本 manifest）
+├── data/                      # 元数据（版本 manifest 缓存等）
+├── runtime/                   # 自动下载的 Java 运行时（JavaDownloader 生成）
 ├── test/                      # 测试代码
 └── launcher_logs/             # 启动器日志
-```
 
-## 项目状态
 
-当前版本：**v0.6.0**
+项目状态
+当前版本：v0.10.0
 
-- ✅ 离线模式完整启动流程（实例管理 → 版本检查 → 参数解析 → 启动游戏）
-- ✅ 多实例管理（创建、查看、删除）
-- ✅ 初始化脚本（自动生成目录和默认配置文件）
-- ✅ Minecraft 自动下载安装（已接入 CLI，创建实例时可一键安装）
-- ❌ Fabric / Forge 加载器自动安装
-- ❌ Microsoft 正版登录
+✅ 离线模式完整启动流程（实例管理 → 版本检查 → 参数解析 → 启动游戏）
+✅ 多实例管理（创建、查看、安装、删除，含安装状态追踪）
+✅ 初始化脚本（自动生成目录和默认配置文件）
+✅ Minecraft 自动下载安装（版本 json、客户端 jar、依赖库、原生库、资源索引、资源文件）
+✅ 多下载源支持（Mojang 官方源 / BMCLAPI 镜像，可切换）
+✅ Java 自动查找与缺失时自动下载（Adoptium）
+✅ 原生库自动下载与解压
+❌ Fabric / Forge 加载器自动安装
+❌ Microsoft 正版登录
+协议
+本项目基于 GNU General Public License v3.0 开源。这意味着：
 
-## 协议
-
-本项目基于 [GNU General Public License v3.0](./LICENSE) 开源。这意味着：
-
-- 任何人都可以自由使用、复制、修改、分发本项目
-- 但基于本项目二次开发的衍生作品，同样必须以 GPLv3 开源（即"传染性"/copyleft）
-- 分发时必须保留版权声明和协议全文
+任何人都可以自由使用、复制、修改、分发本项目
+但基于本项目二次开发的衍生作品，同样必须以 GPLv3 开源（即"传染性"/copyleft）
+分发时必须保留版权声明和协议全文

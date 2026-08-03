@@ -312,9 +312,20 @@ class Launcher:
         #启动前检查
         try:
             java_path = self.java_manager.find_java(self.instance_id)
-        except (ValueError, KeyError, FileNotFoundError) as e:
+        except (KeyError, FileNotFoundError) as e:
             print(f"Java 环境检查失败: {e}")
             return
+        except ValueError as e: #Java缺失
+            required = self.java_manager.get_instance_java_version(self.instance_id)
+            print(f"缺少 Java {required}({e})")
+            answer = input("是否自动下载并继续？(y/n): ").strip().lower()
+            if answer != "y":
+                return
+            try:
+                java_path = self.java_manager.download_java_for_instance(self.instance_id)
+            except Exception as download_error:
+                print(f"自动下载 Java 失败: {download_error}")
+                return
 
         #启动准备
         version_json = version_json_load(self.config)
