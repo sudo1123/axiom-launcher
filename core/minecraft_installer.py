@@ -37,7 +37,6 @@ class MinecraftInstaller:
 
     def download_libraries(self, artifacts, instance_path):
         total = len(artifacts)
-        skipped = 0
         for idx, artifact in enumerate(artifacts, 1):
             target_path = (
                 instance_path
@@ -46,11 +45,6 @@ class MinecraftInstaller:
                 / artifact["path"]
             )
 
-            # 跳过已存在的文件
-            if target_path.is_file():
-                skipped += 1
-                continue
-
             # 同一行刷新整体进度（\r 回到行首，不换行）
             print(f"\r  库文件进度: [{idx}/{total}]", end="")
 
@@ -58,23 +52,19 @@ class MinecraftInstaller:
                 artifact["url"],
                 target_path,
                 show_progress=False,      # 不显示单文件进度，避免覆盖计数器
-                silent_success=True       # 不打印"已成功下载"，避免刷屏
+                silent_success=True,
+                expected_sha1=artifact.get("sha1") 
             )
 
-        actual_downloaded = total - skipped
-        print(f"\r  库文件下载完成! ({actual_downloaded} 个新文件, {skipped} 个已存在)")
+        print(f"\r  库文件下载完成! 共 {total} 个文件")
 
     def download_asset_objects(self, asset_index_path):
         objects_list = self.asset_manager.get_objects_list(
             asset_index_path, self.instance_path
         )
         total = len(objects_list)
-        skipped = 0
 
         for idx, asset_object in enumerate(objects_list, 1):
-            if asset_object["path"].is_file():
-                skipped += 1
-                continue
 
             # 每3个文件刷新一次计数器
             if idx % 3 == 0 or idx == total:
@@ -84,11 +74,11 @@ class MinecraftInstaller:
                 asset_object["url"],
                 asset_object["path"],
                 show_progress=False,
-                silent_success=True
+                silent_success=True,
+                expected_sha1=asset_object["hash"]
             )
 
-        actual_downloaded = total - skipped
-        print(f"\r  资源文件下载完成! ({actual_downloaded} 个新文件, {skipped} 个已存在)")
+        print(f"\r  资源文件下载完成! 共 {total} 个文件")
 
 
     def install(self, instance_id, version):
@@ -105,17 +95,20 @@ class MinecraftInstaller:
         download_path=self.instance_path / ".minecraft" / "versions" / str(version) / f"{version}.json" 
         self.downloader.download(
             version_url, download_path,
-            show_progress=True, silent_success=True
+            show_progress=True, silent_success=True,
+            expected_sha1=version_dic.get("sha1")
         )
         print("下载版本json完毕")
 
         # == 下载客户端 ==
         print("[2/6] 下载客户端jar...")
-        client_url=self.version_parser.get_client_url(download_path)
+        client_info=self.version_parser.get_client_info(download_path)
+        client_url=client_info["url"]
         download_path=self.instance_path / ".minecraft" / "versions" / str(version) / f"{version}.jar"
         self.downloader.download(
             client_url, download_path,
-            show_progress=True, silent_success=True
+            show_progress=True, silent_success=True,
+            expected_sha1=client_info.get("sha1")
         )
         print("下载客户端完毕")
 
@@ -147,7 +140,8 @@ class MinecraftInstaller:
         print("[5/6] 下载资源索引...")
         self.downloader.download(
             asset_index_url, asset_index_path,
-            show_progress=True, silent_success=True
+            show_progress=True, silent_success=True,
+            expected_sha1=asset_index_info.get("sha1")
         )
         print("资源索引下载完毕")
         # == 下载asset objects ==

@@ -63,5 +63,6 @@ class LibraryManager:
                     "url": obj["url"],
                     "name": library.get("name"),
                     "extract": library.get("extract",{}),   # 解压排除规则(部分库有)
+                    "sha1" : obj.get("sha1")
                 })
         return result

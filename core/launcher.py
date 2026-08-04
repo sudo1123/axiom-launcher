@@ -210,6 +210,8 @@ def argument_context_load(config, version_json, classpath_string ,auth_context):
 
         "user_type":"legacy",
 
+        "user_properties": "{}",
+
         "version_type":"release",
 
         "classpath":classpath_string,
@@ -375,7 +377,7 @@ class Launcher:
 
             command = build_launch_command(java_path,filtered_jvm_arguments,mainclass,filtered_game_arguments)
             # """注意：调试代码"""
-            # print(command)
+            print(command)
             # "调试代码结束"
         #启动Minecraft
             launch_minecraft(command)

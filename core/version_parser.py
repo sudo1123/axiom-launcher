@@ -29,6 +29,12 @@ class VersionParser():
         url = version_json["downloads"]["client"]["url"]
         return url
 
+    def get_client_info(self,json_path):
+        with open (json_path,"r",encoding="utf-8") as jp:
+            version_json=json.load(jp)
+        client = version_json["downloads"]["client"]
+        return client
+
     def get_libraries(self,json_path):
         with open (json_path,"r",encoding="utf-8") as jp:
             version_json=json.load(jp)
@@ -44,5 +50,5 @@ class VersionParser():
     def get_major_version(self,json_path):
         with open (json_path,"r",encoding="utf-8") as jp:
             version_json=json.load(jp)
-        major_version=version_json["javaVersion"]["majorVersion"]
+        major_version=version_json.get("javaVersion", {}).get("majorVersion", 8)#如果版本json缺失javaVersion字段，自动使用Java8，修复1.6.1启动失败
         return  major_version

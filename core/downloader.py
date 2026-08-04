@@ -15,8 +15,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path 
+import hashlib
 import requests
 import time
+
+class SHAMismatchError(Exception):  #自定义SHA1校验失败异常
+    pass
 
 class Downloader():
     def __init__(self):
@@ -29,6 +33,19 @@ class Downloader():
         if folder_path.is_dir():
             return
         folder_path.mkdir(parents=True)
+
+    def calculate_sha1(self,path):
+        path=Path(path)
+        with open(path,"rb") as p:
+            hasher = hashlib.sha1()
+            while True:
+                chunk = p.read(65536)
+                if not chunk:  #chunk是空字节（文件已完全读完）
+                    break
+                hasher.update(chunk)
+
+        result = hasher.hexdigest()
+        return result
 
     def show_progress(self,downloaded_size,total_size,last_refresh,refresh_interval):
         if time.time() - last_refresh >= refresh_interval:
@@ -44,11 +61,17 @@ class Downloader():
 
          
     
-    def download(self, url, target_path, max_retry=10, show_progress=False,silent_success=False):
+    def download(self, url, target_path, max_retry=10, show_progress=False,silent_success=False,expected_sha1=None):
         target_path = Path(target_path)
 
         if target_path.is_file(): #跳过重复文件
-            return
+            if expected_sha1:  #启用了SHA1校验
+                if self.calculate_sha1(target_path) == expected_sha1:
+                    return
+                else:   #存在此文件但是SHA1校验不通过
+                    target_path.unlink()   #强制删除损坏文件,继续下载
+            else:              #未启用校验，存在即跳过
+                return
 
         self.ensure_target_path(target_path)
         """将下载文件路径转换成临时路径（给文件加上临时文件后缀名）"""
@@ -83,6 +106,12 @@ class Downloader():
                         if show_progress:
                             last_refresh=self.show_progress(downloaded_size,total_size,last_refresh,0.5) #间隔500ms刷新
 
+                if expected_sha1:            #启用了sha1校验
+                    local_sha1=self.calculate_sha1(temp_path)
+                    if local_sha1 != expected_sha1:    #校验不通过
+                        raise SHAMismatchError(f"SHA1校验失败,url: {url},期望SHA1: {expected_sha1}, 实际SHA1: {local_sha1}")
+                        #抛出异常中断替换，开始重试
+
                 temp_path.replace(target_path) #恢复正常文件名
                 if show_progress:   #恢复自动换行
                     print()
@@ -91,6 +120,17 @@ class Downloader():
 
 
                 return
+
+            except SHAMismatchError as e:         #捕获匹配失败异常
+                print(
+                    f"\n下载失败 {attempt + 1}/{max_retry}: {url}\n 错误: {e},请耐心等待程序自动重试"
+                )
+                time.sleep(min(2 ** attempt, 30))                #失败后等待一定时间再重试(指数退避，最大30秒)
+
+                if temp_path.exists():   #删除临时文件
+                    temp_path.unlink()
+
+                print("开始重试")  
 
             except requests.RequestException as e:
                 print(
@@ -102,6 +142,7 @@ class Downloader():
                     temp_path.unlink()
 
                 print("开始重试")
+
 
         raise Exception(
             f"下载失败，超过最大重试次数: {url}"

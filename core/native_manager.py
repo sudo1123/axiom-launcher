@@ -39,7 +39,7 @@ class NativeManager:
         for natives in filtered_natives_list:   #循环提取每一个本地类项
             url=natives["url"]
             local_path= native_dir_path / Path(natives["url"]).name 
-            self.downloader.download(url,local_path,silent_success=True)
+            self.downloader.download(url,local_path,silent_success=True,expected_sha1=natives.get("sha1"))
             downloaded_native_libraries.append(
                 {
                 "file_name":str(Path(natives["url"]).name),
