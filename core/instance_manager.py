@@ -76,7 +76,7 @@ class InstanceManager():
 
         raise FileNotFoundError("实例不存在")
 
-    def create_instance(self,id,version,instance_type):
+    def create_instance(self,id,minecraft_version,instance_type):
         result=self.list_instances()
         instance_exist=False
         for item in result:
@@ -90,11 +90,17 @@ class InstanceManager():
             raise FileExistsError("实例目录已存在")
         (instance_path).mkdir(parents=True)
         with open(instance_path / "instance.json","w",encoding="utf-8") as ij :
-            content={"id":id,
-                     "version":version,
-                     "type":instance_type,
-                     "installation_status": "not_installed",
-                     "java_path":None}
+            content={
+                "id":id,
+                "minecraft_version":minecraft_version,
+                "loader":{
+                    "type":instance_type,
+                    "version": None
+                },
+                "installation_status": "not_installed",
+                "java_path":None
+                     }
+            
             json.dump(content,
                       ij,
                       ensure_ascii=False,
@@ -148,3 +154,15 @@ class InstanceManager():
                         ij,
                         indent=4,
                         ensure_ascii=False)
+
+    
+    def set_loader_version(self,instance_id,loader_version):
+            instance_json_path=self.instances_path / instance_id / "instance.json"
+            with open (instance_json_path,"r",encoding="utf-8") as ij:
+                instance_json=json.load(ij)
+            instance_json["loader"]["version"] = str(loader_version)
+            with open (instance_json_path,"w",encoding="utf-8") as ij:
+                json.dump(instance_json,
+                            ij,
+                            indent=4,
+                            ensure_ascii=False)

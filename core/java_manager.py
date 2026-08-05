@@ -31,7 +31,7 @@ class JavaManager:
         
     def get_instance_java_version(self,instance_id):
         instance_path=self.instance_manager.get_instance_path(instance_id)
-        instance_version=self.instance_manager.load_instance(instance_id)["version"]
+        instance_version=self.instance_manager.load_instance(instance_id)["minecraft_version"]
 
         version_json=(
             instance_path

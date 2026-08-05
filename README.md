@@ -17,6 +17,7 @@
 - **智能参数解析** — 解析版本 json 中的 JVM 参数与游戏参数，按操作系统、平台与 features 规则自动过滤
 - **classpath 自动拼接** — 自动构建依赖库 classpath 并启动游戏进程
 - **版本清单缓存** — 自动缓存版本 manifest，超过 24 小时自动刷新
+- **Fabric 加载器自动安装** — 自动下载 Fabric 专属版本 json 与追加依赖库，安装时可选 loader 稳定版，一键启动
 
 ## 环境要求
 
@@ -48,7 +49,8 @@
    python main.py
    ```
    - 选择「**实例管理**」→「**创建实例**」
-   - 输入实例 ID、Minecraft 版本号（如 `1.21.4`）、实例类型（`vanilla`）
+      - 输入实例 ID、Minecraft 版本号（如 `1.21.4`）、实例类型（`vanilla` / `fabric`）
+   - 若选择 `fabric`，安装时会提示从可用稳定版中选择 loader 版本
    - 提示「是否安装 Minecraft?」时选择 **y**
    - 等待自动下载完成即可
 
@@ -87,8 +89,9 @@
 | 类型 | 自动安装 | 说明 |
 |------|----------|------|
 | **vanilla** | ✅ 支持 | 原版 Minecraft，可从所选下载源自动下载全部游戏文件 |
-| **fabric** | ❌ 预留 | Fabric 加载器自动安装尚未实现，需自行放入加载器文件 |
-| **forge** | ❌ 预留 | Forge 加载器自动安装尚未实现，需自行放入加载器文件 |
+| **fabric** | ✅ 支持 | Fabric 加载器：自动下载专属版本 json 与追加依赖库，安装时选择 loader 稳定版 |
+| **forge** | ❌ 预留 | Forge 加载器自动安装尚未实现 |
+
 
 ## 下载源说明
 
@@ -111,9 +114,12 @@
 
 每个实例对应 `instances/<id>/instance.json`，记录：
 
-- `id`、`version`、`type`
+- `id` — 实例 ID
+- `minecraft_version` — 原版 Minecraft 版本
+- `loader` — 加载器配置：`type`（vanilla / fabric / forge）与 `version`（加载器版本，安装后写入）
 - `installation_status` — 安装状态（`not_installed` / `installing` / `installed`）
 - `java_path` — 该实例实际使用的 Java 可执行文件路径
+
 
 ## 项目结构
 
@@ -141,7 +147,12 @@
 │   ├── download_source.py     # 下载源抽象基类
 │   ├── mojang_source.py       # Mojang 官方下载源实现
 │   ├── bmcl_api_source.py     # BMCLAPI 镜像下载源实现
-│   └── source_manager.py      # 下载源管理器（按配置选择下载源）
+│   ├── source_manager.py      # 下载源管理器（按配置选择下载源）
+│   └── loaders/               # 加载器策略模块
+│   │   ├── loader.py          # Loader 抽象基类（统一安装/启动接口）
+│   │   ├── loader_manager.py  # LoaderManager 策略工厂（按类型获取加载器）
+│   │   ├── vanilla_loader.py  # 原版加载器（空实现占位）
+│   │   └── fabric_loader.py   # Fabric 加载器（版本列表、专属 json、追加库）
 ├── accounts/                  # 账号系统
 │   ├── account.py             # 账号基类
 │   ├── offline.py             # 离线账号（UUID 生成）
@@ -159,7 +170,7 @@
 
 ## 项目状态
 
-当前版本：**v0.10.0**
+当前版本：**v0.11.0**
 
 - ✅ 离线模式完整启动流程（实例管理 → 版本检查 → 参数解析 → 启动游戏）
 - ✅ 多实例管理（创建、查看、安装、删除，含安装状态追踪）
@@ -168,7 +179,8 @@
 - ✅ 多下载源支持（Mojang 官方源 / BMCLAPI 镜像，可切换）
 - ✅ Java 自动查找与缺失时自动下载（Adoptium）
 - ✅ 原生库自动下载与解压
-- ❌ Fabric / Forge 加载器自动安装
+- ✅ Fabric 加载器自动安装（版本选择、专属版本 json、追加依赖库）
+- ❌ Forge 加载器自动安装
 - ❌ Microsoft 正版登录
 
 ## 协议

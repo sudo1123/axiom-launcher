@@ -32,7 +32,7 @@ class NativeManager:
 
 
     def install_natives(self,filtered_natives_list,instance_id):
-        version=self.instance_manager.load_instance(instance_id)["version"]
+        version=self.instance_manager.load_instance(instance_id)["minecraft_version"]
         native_dir_path=Path(self.instance_manager.get_instance_path(instance_id)) /".minecraft" /"versions"/ str(version) / f"{version}-natives"
         (native_dir_path).mkdir(parents=True,exist_ok=True)#创建本地库文件夹
         downloaded_native_libraries=[]

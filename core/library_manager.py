@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from pathlib import Path
+import os
 from core.rule_checker import RuleChecker
 class LibraryManager:
 
@@ -38,11 +40,15 @@ class LibraryManager:
         artifacts = []
 
         for library in filtered_libraries:
-            if "downloads" in library:
+            if "downloads" in library:       #mojang格式
                 downloads = library["downloads"]
 
                 if "artifact" in downloads:
                     artifacts.append(downloads["artifact"])
+
+            elif "name" in library and "url" in library: #fabric追加库(Maven格式)
+                parse_result=self.parse_maven_library(library)
+                artifacts.append(parse_result)
 
         return artifacts
 
@@ -66,3 +72,21 @@ class LibraryManager:
                     "sha1" : obj.get("sha1")
                 })
         return result
+
+    def parse_maven_library(self, library):  #fabric追加库解析
+        name=library["name"]
+        url=library["url"]
+        split_name=name.split(":")   #根据:符号将名称拆成三个部分group:artifact:version
+        if len(split_name) != 3:
+            raise ValueError("非法Maven坐标")
+        group=split_name[0]
+        file_name=f"{split_name[1]}-{split_name[2]}.jar"
+        transferred_maven_head=group.replace(".","/")
+        artifact_path=f"{transferred_maven_head}/{split_name[1]}/{split_name[2]}/{file_name}"
+        artifact_url = url.rstrip("/") + "/" + artifact_path
+        return {
+            "path": artifact_path,
+            "url": artifact_url,
+            "sha1": library.get("sha1")
+        }
+

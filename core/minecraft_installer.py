@@ -22,6 +22,8 @@ from core.runtime_context import RuntimeContext
 from core.library_manager import LibraryManager
 from core.asset_manager import AssetManager
 from core.native_manager import NativeManager
+from core.loaders.loader_manager import LoaderManager
+
 
 class MinecraftInstaller:
 
@@ -149,5 +151,17 @@ class MinecraftInstaller:
         self.download_asset_objects(asset_index_path)
         print("\n资产下载完毕")
         print()
+
+        # == 追加加载器专属步骤 ==
+        print("追加加载器安装...")
+        instance_config = self.instance_manager.load_instance(instance_id)
+        loader_type = instance_config["loader"]["type"]
+        loader_version = instance_config["loader"]["version"]
+
+        loader = LoaderManager().get_loader(loader_type)
+        loader.install_metadata(instance_id, version, loader_version)
+        loader.install_libraries(instance_id, version, loader_version)
+        print("加载器追加安装完毕")
+
         self.instance_manager.set_installation_status(instance_id,"installed") #修改实例安装状态
         print("安装完毕")

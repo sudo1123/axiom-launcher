@@ -20,6 +20,7 @@ from core.launcher import Launcher
 from core.config_manager import ConfigManager
 from core.minecraft_installer import MinecraftInstaller
 from core.source_manager import SourceManager
+from core.loaders.loader_manager import LoaderManager
 
 class CLI():
     def __init__(self):
@@ -76,17 +77,20 @@ Axiom Launcher
             version,
             instance_type
             )
-            if instance_type == "vanilla":
+            if instance_type in ("vanilla", "fabric"):
                 choice = input(
                     "是否安装Minecraft? (y/n)\n>"
                 )
 
                 if choice.lower() == "y":
                     try:
-                        self.minecraft_installer.install(
-                            instance_id,
-                            version
-                        )
+                        if instance_type == "fabric":
+                            self.install_fabric(instance_id, version)
+                        else:
+                            self.minecraft_installer.install(
+                                instance_id,
+                                version
+                            )
                     except Exception as e:
                         print(f"安装遇到问题: {e}")
                         return
@@ -164,6 +168,7 @@ ID:
 
             elif choice == "4":
                 self.delete_instance()
+
     def install_instance(self):
         print("""
 ====================
@@ -198,10 +203,10 @@ ID:
 
         instance_config = self.instance_manager.load_instance(instance_id)
 
-        instance_type = instance_config["type"]
-        version = instance_config["version"]
+        instance_type = instance_config["loader"]["type"]
+        version = instance_config["minecraft_version"]
 
-        if instance_type != "vanilla":
+        if instance_type not in ("vanilla", "fabric"):
             print(
                 f"暂不支持安装类型: {instance_type}"
             )
@@ -224,10 +229,13 @@ ID:
         )
 
         try:
-            self.minecraft_installer.install(
-                instance_id,
-                version
-            )
+            if instance_type == "fabric":
+                self.install_fabric(instance_id, version)
+            else:
+                self.minecraft_installer.install(
+                    instance_id,
+                    version
+                )
 
             print(
     """
@@ -252,6 +260,35 @@ ID:
 
         input("按ENTER返回")
 
+    def install_fabric(self, instance_id, version):
+        """选择 Fabric loader 版本并安装（选版本→写回→统一install）"""
+        loader = LoaderManager().get_loader("fabric")
+        try:
+            available = loader.get_available_versions(version)
+        except Exception as e:
+            print(f"获取 Fabric 版本列表失败: {e}")
+            input("按ENTER返回")
+            return
+
+        if not available:
+            print(f"未找到 {version} 可用的 Fabric loader 稳定版")
+            input("按ENTER返回")
+            return
+
+        print("可用的 Fabric loader 版本:")
+        for idx, lv in enumerate(available, 1):
+            print(f"  {idx}. {lv}")
+
+        choice = input("请选择 loader 版本:\n>")
+        try:
+            loader_version = available[int(choice) - 1]
+        except (ValueError, IndexError):
+            print("选择无效")
+            input("按ENTER返回")
+            return
+
+        self.instance_manager.set_loader_version(instance_id, loader_version)
+        self.minecraft_installer.install(instance_id, version)
 
 
     def show_instance(self, instance_id):
@@ -267,10 +304,10 @@ ID:
 {instance_config["id"]}
 
 Minecraft版本:
-{instance_config["version"]}
+{instance_config["minecraft_version"]}
 
 类型:
-{instance_config["type"]}
+{instance_config["loader"]["type"]}
 
 路径:
 {self.instance_manager.instances_path / instance_id}

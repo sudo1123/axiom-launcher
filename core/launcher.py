@@ -23,6 +23,7 @@ from core.config_manager import ConfigManager
 from core.library_manager import LibraryManager
 from core.rule_checker import RuleChecker
 from core.java_manager import JavaManager
+from core.loaders.loader_manager import LoaderManager
 import json
 import subprocess
 import os
@@ -72,7 +73,7 @@ def minecraft_validity_check(config):
     else:
         return False
 
-'''==  version读取  =='''
+'''==  版本json(version)读取  =='''
 def version_json_load(config):
     minecraft_directory_path = config["minecraft"]["directory"]
     dicpath = Path(minecraft_directory_path)
@@ -81,6 +82,42 @@ def version_json_load(config):
     with open(file_path,"r") as vj:
         version_json=json.load(vj)
     return version_json
+
+
+def natives_version_json_load(config):
+    minecraft_directory_path = config["minecraft"]["directory"]
+    dicpath = Path(minecraft_directory_path)
+    version_path= dicpath / "versions" / config["minecraft"]["natives_version"]
+    file_path = version_path / f'{config["minecraft"]["natives_version"]}.json'
+    with open(file_path,"r") as vj:
+        version_json=json.load(vj)
+    return version_json
+
+
+"""  补全主json字段（针对模组加载器profile json文件缺失字段使用继承的原版版本json补全）"""
+def version_json_inherit_merge(version_json, inherited_json):
+    """用继承的原版 json 补全主 json 缺失字段，合并 arguments 与 libraries"""
+    # 缺失字段补全（assetIndex/downloads/javaVersion 等）
+    for key in ("assetIndex", "downloads", "javaVersion", "minecraftArguments"):
+        if key not in version_json and key in inherited_json:
+            version_json[key] = inherited_json[key]
+
+    # arguments 合并
+    fabric_args = version_json.get("arguments", {})
+    vanilla_args = inherited_json.get("arguments", {})
+    merged_arguments = {}
+    for section in ("game", "jvm"):
+        merged_arguments[section] = (
+            fabric_args.get(section, []) + vanilla_args.get(section, [])
+        )
+    version_json["arguments"] = merged_arguments
+
+    # libraries 合并
+    version_json["libraries"] = (
+        version_json.get("libraries", []) + inherited_json.get("libraries", [])
+    )
+    return version_json
+
 
 '''==  系统环境 =='''
 # 系统环境检测已迁移至 core.runtime_context.RuntimeContext，当前函数为封装，用于兼容旧代码
@@ -98,13 +135,15 @@ def runtime_context_load():
 
 '''=== libraries解析 ==='''
 def library_paths_load(config, libraries):
-    """根据已过滤的 libraries 列表构建库文件路径"""
+    """根据已过滤的 libraries 列表构建库文件路径（兼容 Mojang 与 Maven 格式）"""
+    library_mgr = LibraryManager(RuntimeContext().to_dict())
+    artifacts = library_mgr.get_artifacts(libraries)    #把所有库全部转成mojang artifact的格式
     paths = []
     prefix = Path(config["minecraft"]["directory"]) / "libraries"
-    for element in libraries:
-        if "downloads" in element and "artifact" in element["downloads"]:
-            paths.append(prefix / Path(element["downloads"]["artifact"]["path"]))
+    for artifact in artifacts:
+        paths.append(prefix / Path(artifact["path"]))
     return paths
+
 
 def check_libraries_exist(libraries_paths):
     missing_paths=[]
@@ -120,7 +159,7 @@ def check_libraries_exist(libraries_paths):
 
 def get_minecraft_jar_path(config):
     prefix=Path(config["minecraft"]["directory"])
-    mc_version=config["minecraft"]["selected_version"]
+    mc_version=config["minecraft"]["natives_version"]
     tail=Path(f"versions/{mc_version}/{mc_version}.jar")
     full_path= prefix / tail
     return full_path
@@ -219,8 +258,8 @@ def argument_context_load(config, version_json, classpath_string ,auth_context):
         "natives_directory": str(
             Path(config["minecraft"]["directory"])
             / "versions"
-            / config["minecraft"]["selected_version"]
-            / f'{config["minecraft"]["selected_version"]}-natives'
+            / config["minecraft"]["natives_version"]
+            / f'{config["minecraft"]["natives_version"]}-natives'
         ),
 
 
@@ -290,6 +329,7 @@ class Launcher:
         self.instance_manager = InstanceManager()
         self.config_manager = ConfigManager()
         self.java_manager = JavaManager()
+        self.loader_manager =LoaderManager()
 
     def start(self):
         #配置文件加载
@@ -303,14 +343,31 @@ class Launcher:
         instance_config = self.instance_manager.load_instance(self.instance_id)
 
         #兼容旧函数（使用实例管理类动态加载实例信息）
-        self.config["minecraft"]["selected_version"] = instance_config["version"]
         self.config["minecraft"]["directory"] = (
                 self.instance_manager.instances_path
                 / self.instance_id
                 / ".minecraft"
             )
-        self.instance_type = instance_config["type"]
-        
+
+        #版本解析
+        self.minecraft_version=instance_config.get("minecraft_version")
+        self.instance_type = instance_config.get("loader").get("type")
+        self.loader_version= instance_config.get("loader").get("version")
+        try:
+            self.loader=self.loader_manager.get_loader(self.instance_type)
+        except Exception as e:
+            print(f"获取加载器对象失败，{e}")
+            return
+
+        if self.instance_type != "vanilla" and self.loader_version == None:
+            print("该类型实例缺少 loader 版本，请先在实例管理中安装")
+            return
+
+        self.launch_version=self.loader.get_launch_version(self.minecraft_version,self.loader_version)
+        #给config字典里加入一个临时的naives_version键用于保存客户端jar的名称
+        self.config["minecraft"]["natives_version"]=self.loader.get_client_jar_version(self.minecraft_version,self.launch_version)
+        self.config["minecraft"]["selected_version"] = self.launch_version
+
         #启动前检查
         try:
             java_path = self.java_manager.find_java(self.instance_id)
@@ -330,7 +387,17 @@ class Launcher:
                 return
 
         #启动准备
-        version_json = version_json_load(self.config)
+        if self.instance_type != "vanilla":        #启动的实例不是原版实例
+            version_json = version_json_load(self.config)          #读取profile文件（模组加载器的json）
+            native_json = natives_version_json_load(self.config)   #读取对应的原版版本json
+            version_json= version_json_inherit_merge(version_json,native_json)  #执行补全
+            
+        else:
+            version_json = version_json_load(self.config)  #原版实例的版本json文件就是完整版,不需要补全
+
+
+
+
         mainclass=version_json["mainClass"]
         mc_jar_path=get_minecraft_jar_path(self.config)
 
@@ -377,7 +444,7 @@ class Launcher:
 
             command = build_launch_command(java_path,filtered_jvm_arguments,mainclass,filtered_game_arguments)
             # """注意：调试代码"""
-            print(command)
+            # print(command)
             # "调试代码结束"
         #启动Minecraft
             launch_minecraft(command)
