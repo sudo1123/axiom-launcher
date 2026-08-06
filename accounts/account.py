@@ -20,11 +20,18 @@ class Account:
         self.auth_uuid=None
         self.auth_access_token=None
         self.user_type=None
+        self.auth_xuid = ""
+        self.clientid = ""
+
+        
     def get_auth_context(self):
         context={
     "auth_player_name": self.auth_player_name,
     "auth_uuid": str(self.auth_uuid),
     "auth_access_token": self.auth_access_token,
-    "user_type": self.user_type
+    "user_type": self.user_type,
+    "auth_xuid": self.auth_xuid,
+    "clientid": self.clientid
+
     }
         return context

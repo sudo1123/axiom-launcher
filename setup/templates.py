@@ -21,7 +21,7 @@ TEMPLATES={
 
     "launcher": {
         "name": "Axiom Launcher",
-        "version": "0.11.0"
+        "version": "0.12.0"
     },
 
     "minecraft": {

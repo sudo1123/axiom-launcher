@@ -429,6 +429,14 @@ class Launcher:
 
             account_object = accounts.manager.AccountManager(self.account_config)
             account=account_object.get_selected_account()
+            if account!= None and account.user_type == "msa":  #正版登录
+                try:
+                    account.refresh()                         #刷新access_token
+                except Exception as e:
+                    print(f"登录态刷新失败，请重新登录: {e}")
+                    return
+                #返回中断启动
+
             auth_context=account.get_auth_context()
 
             argument_context=argument_context_load(self.config,version_json,classpath_string,auth_context)

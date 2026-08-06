@@ -3,7 +3,8 @@
 一个用 Python 编写的第三方 Minecraft: Java Edition 启动器。
 > A third-party Minecraft: Java Edition launcher written in Python.
 
-> ⚠️ **免责声明**：本项目与 Mojang、Microsoft、Xbox 或 Minecraft 无任何官方关联，不隶属于、不受其赞助或认可。Minecraft 及相关名称、素材均为其各自所有者的财产。使用本启动器前，请自行确保你合法拥有 Minecraft: Java Edition，并遵守 [Minecraft 使用指南](https://www.minecraft.net/en-us/usage-guidelines)、EULA 及 Microsoft 服务协议等相关条款。本项目不打包、不分发任何 Minecraft 游戏资源。
+> ⚠️ **免责声明**：本项目与 Mojang、Microsoft、Xbox 或 Minecraft 无任何官方关联，不隶属于、不受其赞助或认可。Minecraft 及相关名称、素材均为其各自所有者的财产。使用本启动器前，请自行确保你合法拥有 Minecraft: Java Edition，并遵守 [Minecraft 使用指南](https://www.minecraft.net/en-us/usage-guidelines)、EULA 及 Microsoft 服务协议等相关条款。本项目不打包、不分发任何 Minecraft 游戏资源。正版登录功能仅面向合法拥有 Minecraft: Java Edition 的用户，登录过程由微软官方 OAuth 完成，本项目不接触用户密码。
+
 
 ## 功能
 
@@ -13,11 +14,20 @@
 - **Java 自动管理** — 自动在 PATH 与系统常见安装位置查找 Java 并校验版本；缺失时可从 Adoptium API 自动下载对应版本 JDK
 - **原生库处理** — 自动下载并解压原生库（natives），正确应用解压排除规则
 - **离线账号系统** — 基于用户名生成确定性的离线 UUID（与官方启动器算法一致，兼容存档 / 皮肤缓存）
+- **Microsoft 正版登录** — 通过微软设备码流程（Device Code Flow）登录 Microsoft 账户，自动完成微软 → Xbox Live → XSTS → Minecraft 完整鉴权链，获取真实玩家名与 UUID；支持 refresh token 自动续期，token 过期时启动前自动刷新，可进入正版（online-mode）服务器
 - **启动前完整性检查** — 校验 Java 运行时、版本 json、jar 及依赖库是否齐全
 - **智能参数解析** — 解析版本 json 中的 JVM 参数与游戏参数，按操作系统、平台与 features 规则自动过滤
 - **classpath 自动拼接** — 自动构建依赖库 classpath 并启动游戏进程
 - **版本清单缓存** — 自动缓存版本 manifest，超过 24 小时自动刷新
 - **Fabric 加载器自动安装** — 自动下载 Fabric 专属版本 json 与追加依赖库，安装时可选 loader 稳定版，一键启动
+
+## Client ID 警告
+
+⚠️ 本项目代码中包含的 Azure **Client ID 属于 Axiom Launcher 官方所有，仅供本项目官方版本使用**，未授权不得用于任何其他第三方应用。
+
+请勿直接复用本项目中的 Client ID。**自建部署、Fork 或任何衍生版本，必须使用你自己注册的 Client ID**，并自行承担相应的申请与审核责任。
+
+Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 
 ## 环境要求
 
@@ -66,7 +76,9 @@
 | `1. 启动游戏` | 选择实例并启动 |
 | `2. 实例管理` | 查看 / 创建 / 安装 / 删除实例 |
 | `3. 设置` | 查看 / 切换下载源 |
-| `4. 退出` | 退出程序 |
+| `4. 账号管理` | 添加微软/离线账号、查看、切换、删除 |
+| `5. 退出` | 退出程序 |
+
 
 实例管理：
 
@@ -83,6 +95,17 @@
 |------|------|
 | `1. 查看当前下载源` | 显示当前配置值与下载源名称 |
 | `2. 切换下载源` | 在 Mojang 官方源 / BMCLAPI 之间切换 |
+
+账号管理：
+
+| 选项 | 说明 |
+|------|------|
+| `1. 添加微软账号` | 设备码流程登录微软账户（需浏览器访问 microsoft.com/link 输入代码） |
+| `2. 添加离线账号` | 输入用户名创建离线账号 |
+| `3. 查看账号` | 列出所有账号及当前选中项 |
+| `4. 切换账号` | 切换当前启动使用的账号 |
+| `5. 删除账号` | 删除指定账号 |
+
 
 ## 实例类型说明
 
@@ -107,9 +130,10 @@
 | 文件 | 用途 | 关键字段 |
 |------|------|----------|
 | `config.json` | 启动器主配置 | `launcher.name` / `launcher.version`、`minecraft.selected_instance`、`java.memory.min/max`、`game.resolution.width/height`、`game.fullscreen`、`download.selected_source` |
-| `accounts.json` | 账号配置 | `accounts[].id` / `type` / `username`、`selected` |
+| `accounts.json` | 账号配置 | `accounts[].id` / `type`（`offline` / `microsoft`）/ `username` / `player_name` / `uuid` / `access_token` / `refresh_token` / `microsoft_token` / `xuid` / `client_id`、`selected` |
 | `launch_context.json` | 启动参数 features 开关 | `is_demo_user`、`has_custom_resolution`、`has_quick_plays_support`、`is_quick_play_*` 等 |
 
+微软账号条目包含 OAuth 凭证（`access_token` / `refresh_token` / `microsoft_token`）与玩家档案（`player_name` / `uuid` / `xuid`）。这些 token 为明文存储，请注意保护 `configs/accounts.json` 的访问权限。token 过期后启动器会在启动前自动用 `refresh_token` 刷新。
 所有配置文件均可使用 `python setup.py` 生成带默认值的版本（已存在则跳过）。
 
 每个实例对应 `instances/<id>/instance.json`，记录：
@@ -154,9 +178,10 @@
 │   │   ├── vanilla_loader.py  # 原版加载器（空实现占位）
 │   │   └── fabric_loader.py   # Fabric 加载器（版本列表、专属 json、追加库）
 ├── accounts/                  # 账号系统
-│   ├── account.py             # 账号基类
-│   ├── offline.py             # 离线账号（UUID 生成）
-│   └── manager.py             # 账号管理器
+│   ├── account.py             # 账号基类（auth_player_name / uuid / access_token / user_type / xuid / clientid）
+│   ├── offline.py             # 离线账号（UUID 生成，接收字典构造）
+│   ├── microsoft.py           # 微软 OAuth 认证 + 正版账号（设备码申请、token 轮询/刷新、Xbox→XSTS→Minecraft 鉴权链）
+│   └── manager.py             # 账号管理器（类型分发 + 增删/保存/切换）
 ├── setup/                     # 初始化模块
 │   ├── initializer.py         # 目录创建与配置文件初始化
 │   └── templates.py           # 配置文件默认模板
@@ -170,7 +195,7 @@
 
 ## 项目状态
 
-当前版本：**v0.11.0**
+当前版本：**v0.12.0**
 
 - ✅ 离线模式完整启动流程（实例管理 → 版本检查 → 参数解析 → 启动游戏）
 - ✅ 多实例管理（创建、查看、安装、删除，含安装状态追踪）
@@ -181,7 +206,8 @@
 - ✅ 原生库自动下载与解压
 - ✅ Fabric 加载器自动安装（版本选择、专属版本 json、追加依赖库）
 - ❌ Forge 加载器自动安装
-- ❌ Microsoft 正版登录
+- ✅ Microsoft 正版登录（设备码 OAuth + Xbox→XSTS→Minecraft 鉴权链 + refresh token 自动刷新）
+  - ⏳ 注：需要应用通过 Mojang 的 AppID Review 审核后，客户端 ID 才会被 Minecraft 服务认可；审核通过前 `login_with_xbox` 会返回 `Invalid app registration`
 
 ## 协议
 

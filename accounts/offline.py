@@ -18,8 +18,9 @@ from accounts.account import Account
 import hashlib
 import uuid
 class OfflineAccount(Account):
-    def __init__ (self,username):
+    def __init__ (self,data):
         super().__init__()
+        username = data["username"] 
         self.auth_player_name = username
         self.auth_uuid = self.generate_offline_uuid(username)
         self.auth_access_token ="offline"

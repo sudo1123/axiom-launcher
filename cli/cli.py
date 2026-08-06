@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
+import json
+from pathlib import Path
+from accounts.manager import AccountManager
+from accounts.microsoft import MicrosoftAuthenticator
 from core.instance_manager import InstanceManager
 from core.launcher import Launcher
 from core.config_manager import ConfigManager
@@ -28,6 +31,11 @@ class CLI():
         self.config_manager = ConfigManager()
         self.launcher = Launcher()
         self.minecraft_installer = MinecraftInstaller()
+        self.accounts_file = Path(__file__).resolve().parent.parent / "configs" / "accounts.json"
+        with open(self.accounts_file, "r", encoding="utf-8") as f:
+            self.account_config = json.load(f)
+        self.account_manager = AccountManager(self.account_config, str(self.accounts_file))
+
 
     def main_menu(self):
         print(
@@ -39,7 +47,8 @@ Axiom Launcher
 1. 启动游戏
 2. 实例管理
 3. 设置
-4. 退出
+4. 账号管理
+5. 退出
 
 请输入:
 """)
@@ -419,6 +428,226 @@ Minecraft版本:
 
         input("按ENTER返回")
 
+    def launch_menu_loop(self):
+        while True:
+            result=self.instance_manager.list_instances()
+            print("""
+====================
+启动游戏 : 实例列表
+====================
+                    """)
+            print()
+            index=1
+            instance_name_dic={}
+            for item in result:
+                print(f"{str(index)}. {item.name}")
+                instance_name_dic[str(index)]=item.name
+                index+=1
+            print("")
+            print("请输入要启动的实例")
+            choice=input(">")
+            if choice in instance_name_dic.keys():
+                self.config_manager.set_selected_instance(instance_name_dic[choice])
+                print(
+"""
+====================
+正在启动
+====================
+"""
+)
+                self.launcher.start()
+                input("Minecraft已退出，按ENTER返回主菜单")
+                break
+                
+            else:
+                continue
+
+    def account_menu_loop(self):
+        while True:
+            print("""
+====================
+账号管理
+====================
+
+1. 添加微软账号
+2. 添加离线账号
+3. 查看账号
+4. 切换账号
+5. 删除账号
+6. 返回
+
+请输入:
+            """)
+            choice = input(">")
+            if choice == "6":
+                break
+            elif choice == "1":
+                self.add_microsoft_account()
+            elif choice == "2":
+                self.add_offline_account()
+            elif choice == "3":
+                self.show_accounts()
+            elif choice == "4":
+                self.switch_account()
+            elif choice == "5":
+                self.delete_account()
+
+    def add_microsoft_account(self):
+        print("""
+====================
+添加微软账号
+====================
+""")
+        authenticator = MicrosoftAuthenticator()
+        try:
+            init_info = authenticator.authenticate_1()
+        except Exception as e:
+            print(f"发起授权失败: {e}")
+            input("按ENTER返回")
+            return
+
+        print(f"请访问: {init_info['verification_uri']}")
+        print(f"并在页面输入代码: {init_info['user_code']}")
+        print("等待授权...")
+
+        try:
+            account_data = authenticator.authenticate_2(
+                init_info["device_code"], init_info["interval"]
+            )
+        except Exception as e:
+            print(f"授权失败: {e}")
+            input("按ENTER返回")
+            return
+
+        account_data["id"] = "ms_" + account_data["uuid"][:8]
+        account_data["type"] = "microsoft"
+
+        try:
+            self.account_manager.add_account(account_data)
+            self.account_manager.set_selected(account_data["id"])
+            print(f"微软账号添加成功: {account_data['player_name']}")
+        except Exception as e:
+            print(f"保存账号失败: {e}")
+
+        input("按ENTER返回")
+
+    def add_offline_account(self):
+        print("""
+====================
+添加离线账号
+====================
+""")
+        username = input("请输入离线用户名:\n>")
+        if not username.strip():
+            print("用户名不能为空")
+            input("按ENTER返回")
+            return
+
+        account_data = {
+            "id": "offline_" + username,
+            "type": "offline",
+            "username": username,
+        }
+        try:
+            self.account_manager.add_account(account_data)
+            self.account_manager.set_selected(account_data["id"])
+            print(f"离线账号添加成功: {username}")
+        except Exception as e:
+            print(f"保存账号失败: {e}")
+
+        input("按ENTER返回")
+
+    def show_accounts(self):
+        print("""
+====================
+账号列表
+====================
+""")
+        accounts = self.account_manager.list_accounts()
+        if not accounts:
+            print("暂无账号")
+            input("按ENTER返回")
+            return
+
+        for acc in accounts:
+            if acc["type"] == "microsoft":
+                name = acc.get("player_name", "未知")
+            else:
+                name = acc.get("username", "未知")
+            selected = " [当前]" if acc["id"] == self.account_config["selected"] else ""
+            print(f"- {acc['id']} ({acc['type']}) {name}{selected}")
+
+        input("按ENTER返回")
+
+    def switch_account(self):
+        print("""
+====================
+切换账号
+====================
+""")
+        accounts = self.account_manager.list_accounts()
+        if not accounts:
+            print("暂无账号")
+            input("按ENTER返回")
+            return
+
+        acc_map = {}
+        for i, acc in enumerate(accounts, 1):
+            if acc["type"] == "microsoft":
+                name = acc.get("player_name", "未知")
+            else:
+                name = acc.get("username", "未知")
+            print(f"{i}. {acc['id']} ({acc['type']}) {name}")
+            acc_map[str(i)] = acc["id"]
+
+        choice = input("请选择账号:\n>")
+        if choice in acc_map:
+            try:
+                self.account_manager.set_selected(acc_map[choice])
+                print("切换成功")
+            except Exception as e:
+                print(f"切换失败: {e}")
+        else:
+            print("选择无效")
+        input("按ENTER返回")
+
+    def delete_account(self):
+        print("""
+====================
+删除账号
+====================
+""")
+        accounts = self.account_manager.list_accounts()
+        if not accounts:
+            print("暂无账号")
+            input("按ENTER返回")
+            return
+
+        acc_map = {}
+        for i, acc in enumerate(accounts, 1):
+            if acc["type"] == "microsoft":
+                name = acc.get("player_name", "未知")
+            else:
+                name = acc.get("username", "未知")
+            print(f"{i}. {acc['id']} ({acc['type']}) {name}")
+            acc_map[str(i)] = acc["id"]
+
+        choice = input("请选择要删除的账号:\n>")
+        if choice not in acc_map:
+            print("选择无效")
+            input("按ENTER返回")
+            return
+
+        confirm = input(f"确认删除 {acc_map[choice]} ? (y/n)\n>")
+        if confirm.lower() == "y":
+            try:
+                self.account_manager.remove_account(acc_map[choice])
+                print("删除成功")
+            except Exception as e:
+                print(f"删除失败: {e}")
+        input("按ENTER返回")
+
+
 
     def run(self):
         while True:
@@ -426,44 +655,16 @@ Minecraft版本:
 
             choice = input(">")
 
-            if choice == "4":
+            if choice == "5":
                 break
 
             elif choice == "1":
-                while True:
-                    result=self.instance_manager.list_instances()
-                    print("""
-====================
-启动游戏 : 实例列表
-====================
-                            """)
-                    print()
-                    index=1
-                    instance_name_dic={}
-                    for item in result:
-                        print(f"{str(index)}. {item.name}")
-                        instance_name_dic[str(index)]=item.name
-                        index+=1
-                    print("")
-                    print("请输入要启动的实例")
-                    choice=input(">")
-                    if choice in instance_name_dic.keys():
-                        self.config_manager.set_selected_instance(instance_name_dic[choice])
-                        print(
-"""
-====================
-正在启动
-====================
-"""
-)
-                        self.launcher.start()
-                        input("Minecraft已退出，按ENTER返回主菜单")
-                        break
-                        
-                    else:
-                        continue
+                self.launch_menu_loop()
 
             elif choice == "2":
                 self.instance_menu_loop()
             elif choice == "3":
                 self.settings_menu_loop()
+
+            elif choice == "4":
+                self.account_menu_loop()
