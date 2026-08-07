@@ -207,7 +207,6 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 - ✅ Fabric 加载器自动安装（版本选择、专属版本 json、追加依赖库）
 - ❌ Forge 加载器自动安装
 - ✅ Microsoft 正版登录（设备码 OAuth + Xbox→XSTS→Minecraft 鉴权链 + refresh token 自动刷新）
-  - ⏳ 注：需要应用通过 Mojang 的 AppID Review 审核后，客户端 ID 才会被 Minecraft 服务认可；审核通过前 `login_with_xbox` 会返回 `Invalid app registration`
 
 ## 协议
 
