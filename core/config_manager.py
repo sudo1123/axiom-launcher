@@ -96,3 +96,23 @@ class ConfigManager():
         config["download"]["selected_source"] = source_name
 
         self.save_config(config)
+
+    def get_manifest_refresh_on_source_change(self):
+        """
+        获取"下载源变更时自动刷新版本清单"开关（默认开启）
+        """
+        config = self.load_config()
+        download = config.setdefault("download", {})
+
+        return download.get("manifest_refresh_on_source_change", True)
+
+    def set_manifest_refresh_on_source_change(self, enabled: bool):
+        """
+        设置"下载源变更时自动刷新版本清单"开关
+        """
+        config = self.load_config()
+        download = config.setdefault("download", {})
+
+        download["manifest_refresh_on_source_change"] = bool(enabled)
+
+        self.save_config(config)

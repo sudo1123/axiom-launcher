@@ -21,6 +21,7 @@ from core.downloader import Downloader
 from core.instance_manager import InstanceManager
 from core.library_manager import LibraryManager
 from core.runtime_context import RuntimeContext
+from core.source_manager import SourceManager
 
 class FabricLoader(Loader):
     loader_name = "fabric"
@@ -103,11 +104,12 @@ class FabricLoader(Loader):
         artifacts = self.library_manager.get_artifacts(filtered_libraries)
 
         total = len(artifacts)
+        download_source = SourceManager().get_download_source()
         for idx, artifact in enumerate(artifacts, 1):
             target_path = instance_path / ".minecraft" / "libraries" / artifact["path"]
             print(f"\r  Fabric库进度: [{idx}/{total}]", end="")
             self.downloader.download(
-                artifact["url"],
+                download_source.rewrite_url(artifact["url"]),
                 target_path,
                 silent_success=True,
                 expected_sha1=artifact.get("sha1")

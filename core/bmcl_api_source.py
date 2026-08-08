@@ -29,3 +29,28 @@ class BMCLAPISource(DownloadSource):
     def get_manifest_url(self):
         bmcl_api_manifest="https://bmclapi2.bangbang93.com/mc/game/version_manifest_v2.json"
         return bmcl_api_manifest
+
+
+    def rewrite_url(self, official_url):
+        #官方CDN域名 → 镜像根，路径保留（版本json/客户端jar/assets index）
+        mirror_root="https://bmclapi2.bangbang93.com"
+        for official_prefix in (
+            "https://piston-meta.mojang.com/",
+            "https://piston-data.mojang.com/",
+            "https://launchermeta.mojang.com/",
+            "https://launcher.mojang.com/",
+        ):
+            if official_url.startswith(official_prefix):
+                return mirror_root + "/" + official_url[len(official_prefix):]
+
+        #依赖库 / fabric maven 库 → 镜像 /maven
+        for official_prefix in ("https://libraries.minecraft.net/", "https://maven.fabricmc.net/"):
+            if official_url.startswith(official_prefix):
+                return mirror_root + "/maven/" + official_url[len(official_prefix):]
+
+        #fabric meta → 镜像 /fabric-meta
+        meta_prefix="https://meta.fabricmc.net/"
+        if official_url.startswith(meta_prefix):
+            return mirror_root + "/fabric-meta/" + official_url[len(meta_prefix):]
+
+        return official_url

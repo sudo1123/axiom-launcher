@@ -26,3 +26,8 @@ class DownloadSource:
 
     def get_manifest_url(self):
         raise NotImplementedError
+
+    def rewrite_url(self, official_url):
+        #官方URL按镜像规则改写，路径保留，镜像源可据此实现域名替换
+        return official_url
+

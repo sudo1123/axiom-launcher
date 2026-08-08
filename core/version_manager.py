@@ -16,6 +16,7 @@
 import time
 from core.downloader import Downloader
 from core.source_manager import SourceManager
+from core.config_manager import ConfigManager
 from pathlib import Path
 import json
 class VersionManager():
@@ -31,10 +32,14 @@ class VersionManager():
         if force and self.manifest_path.exists():
             self.manifest_path.unlink()   # 强制刷新前删旧文件，绕过 downloader 的"已存在即跳过"逻辑
         self.downloader.download(url, self.manifest_path, show_progress=True, silent_success=True)
+        self._write_source_marker()       # 记录manifest来自哪个下载源
 
     def _ensure_manifest(self):
         if not self.manifest_path.is_file():                 # 缺失 → 自动下载
             self.update_manifest()
+            return
+        if self._should_refresh_on_source_change():          # 切源后 → 自动刷新（受设置控制）
+            self.update_manifest(force=True)
             return
         age = time.time() - self.manifest_path.stat().st_mtime
         if age > self.REFRESH_INTERVAL_SECONDS:              # 过期 → 自动刷新
@@ -55,3 +60,29 @@ class VersionManager():
         for dic in self.manifest["versions"]:
             if dic["id"] == version:
                 return dic
+            
+    def _source_marker_path(self):
+        marker_path = self.manifest_path.with_suffix(self.manifest_path.suffix + ".source")
+        return marker_path
+
+    def _write_source_marker(self):
+        source_key = ConfigManager().get_selected_download_source()
+        self._source_marker_path().write_text(source_key, encoding="utf-8")
+
+    def _read_source_marker(self):
+        path = self._source_marker_path()
+        if not path.exists():
+            return None
+        source_key = path.read_text(encoding="utf-8").strip()
+        return source_key
+
+    def _should_refresh_on_source_change(self):
+        refresh_enabled = ConfigManager().get_manifest_refresh_on_source_change()
+        if not refresh_enabled:             # 设置项关闭时不刷新
+            return False
+        current_source = ConfigManager().get_selected_download_source()
+        marker_source = self._read_source_marker()
+        if marker_source is None:           # 旧缓存无标记：补写当前源标记，避免无谓下载
+            self._write_source_marker()
+            return False
+        return marker_source != current_source

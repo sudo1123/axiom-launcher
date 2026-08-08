@@ -22,6 +22,7 @@ from core.runtime_context import RuntimeContext
 from core.library_manager import LibraryManager
 from core.asset_manager import AssetManager
 from core.native_manager import NativeManager
+from core.source_manager import SourceManager
 from core.loaders.loader_manager import LoaderManager
 
 
@@ -35,6 +36,7 @@ class MinecraftInstaller:
         self.runtime_context = RuntimeContext().to_dict()
         self.library_manager = LibraryManager(self.runtime_context)
         self.asset_manager= AssetManager()
+        self.download_source = SourceManager().get_download_source()
         self.native_manager = NativeManager()
 
     def download_libraries(self, artifacts, instance_path):
@@ -51,7 +53,7 @@ class MinecraftInstaller:
             print(f"\r  库文件进度: [{idx}/{total}]", end="")
 
             self.downloader.download(
-                artifact["url"],
+                self.download_source.rewrite_url(artifact["url"]),
                 target_path,
                 show_progress=False,      # 不显示单文件进度，避免覆盖计数器
                 silent_success=True,
@@ -92,7 +94,7 @@ class MinecraftInstaller:
         # == 下载版本json ==
         print("[1/6] 下载版本json...")
         version_dic=self.version_manager.get_version(version)
-        version_url=version_dic["url"]
+        version_url=self.download_source.rewrite_url(version_dic["url"])
         self.instance_path=self.instance_manager.get_instance_path(instance_id)
         download_path=self.instance_path / ".minecraft" / "versions" / str(version) / f"{version}.json" 
         self.downloader.download(
@@ -105,7 +107,7 @@ class MinecraftInstaller:
         # == 下载客户端 ==
         print("[2/6] 下载客户端jar...")
         client_info=self.version_parser.get_client_info(download_path)
-        client_url=client_info["url"]
+        client_url=self.download_source.rewrite_url(client_info["url"])
         download_path=self.instance_path / ".minecraft" / "versions" / str(version) / f"{version}.jar"
         self.downloader.download(
             client_url, download_path,
@@ -129,13 +131,16 @@ class MinecraftInstaller:
         print("[4/6] 下载原生库...")
         native_libraries_list=self.library_manager.get_native_libraries(filtered_libraries, self.runtime_context["os_name"])
         if native_libraries_list != []:
+            #覆盖url为镜像源
+            for native in native_libraries_list:
+                native["url"] = self.download_source.rewrite_url(native["url"])
             self.native_manager.install_extraction_natives(native_libraries_list, instance_id)
             print("原生库下载并解压完毕")
         else:
             print("已跳过下载原生库")
         # == 从版本json提取assetIndex ==
         asset_index_info=self.version_parser.get_asset_index(self.version_json_path)
-        asset_index_url=asset_index_info["url"]
+        asset_index_url=self.download_source.rewrite_url(asset_index_info["url"])
         asset_index_id=asset_index_info["id"]
         asset_index_path=self.instance_path / ".minecraft" / "assets" / "indexes" / f"{asset_index_id}.json"
         # == 下载assetIndex文件 ==

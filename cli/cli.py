@@ -379,18 +379,21 @@ Minecraft版本:
 
 1. 查看当前下载源
 2. 切换下载源
-3. 返回
+3. 切换"下载源变更时自动刷新版本列表"
+4. 返回
 
 请输入:
             """)
             choice = input(">")
 
-            if choice == "3":
+            if choice == "4":
                 break
             elif choice == "1":
                 self.show_download_source()
             elif choice == "2":
                 self.change_download_source()
+            elif choice == "3":
+                self.toggle_manifest_refresh()
 
     def show_download_source(self):
         selected = self.config_manager.get_selected_download_source()
@@ -425,6 +428,25 @@ Minecraft版本:
             print("下载源已切换")
         else:
             print("选择无效")
+
+        input("按ENTER返回")
+
+    def toggle_manifest_refresh(self):
+        current = self.config_manager.get_manifest_refresh_on_source_change()
+        status = "开启" if current else "关闭"
+        print(f"""
+====================
+下载源变更时自动刷新版本列表
+====================
+
+当前状态: {status}
+""")
+        choice = input("切换状态? (y/n)\n>")
+        if choice.lower() == "y":
+            self.config_manager.set_manifest_refresh_on_source_change(not current)
+            print("已切换")
+        else:
+            print("未修改")
 
         input("按ENTER返回")
 
