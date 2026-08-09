@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
-import requests
 from core.loaders.loader import Loader
 from core.downloader import Downloader
 from core.instance_manager import InstanceManager
@@ -36,7 +35,7 @@ class FabricLoader(Loader):
     def get_available_versions(self, minecraft_version):
         """获取指定 Minecraft 版本可用的 Fabric loader 稳定版列表"""
         url = f"{self.FABRIC_META_BASE}/{minecraft_version}"
-        response = requests.get(url, timeout=30, headers=self.downloader.headers)
+        response = self.downloader.session.get(url,timeout=30)
         response.raise_for_status()
         versions = []
         for entry in response.json():

@@ -18,6 +18,7 @@ from concurrent.futures import as_completed
 from pathlib import Path 
 import hashlib
 import requests
+import requests.adapters
 import time
 
 class SHAMismatchError(Exception):  #自定义SHA1校验失败异常
@@ -25,15 +26,21 @@ class SHAMismatchError(Exception):  #自定义SHA1校验失败异常
 
 class Downloader():
     def __init__(self):
-        self.headers = {
+        self.session=requests.Session()
+        self.session.headers.update({
             "User-Agent": "Axiom Launcher/Launcher"
-        }
+        })
+        adapter=requests.adapters.HTTPAdapter(pool_connections=128,   #缓存的"不同主机"连接池数量
+                                            pool_maxsize=128,       #单个主机的连接池最大连接数
+                                            max_retries=0)
+        self.session.mount("https://",adapter)
+        self.session.mount("http://",adapter)
 
     def ensure_target_path(self,target_path):
         folder_path=Path(target_path).parent
         if folder_path.is_dir():
             return
-        folder_path.mkdir(parents=True)
+        folder_path.mkdir(parents=True,exist_ok=True)
 
     def calculate_sha1(self,path):
         path=Path(path)
@@ -62,7 +69,7 @@ class Downloader():
 
          
     
-    def download(self, url, target_path, max_retry=10, show_progress=False,silent_success=False,expected_sha1=None):
+    def download(self, url, target_path, max_retry=10, show_progress=False,silent_success=False,expected_sha1=None,show_retry_message=True):
         target_path = Path(target_path)
 
         if target_path.is_file(): #跳过重复文件
@@ -70,7 +77,7 @@ class Downloader():
                 if self.calculate_sha1(target_path) == expected_sha1:
                     return
                 else:   #存在此文件但是SHA1校验不通过
-                    target_path.unlink()   #强制删除损坏文件,继续下载
+                    target_path.unlink(missing_ok=True)   #强制删除损坏文件,继续下载
             else:              #未启用校验，存在即跳过
                 return
 
@@ -83,10 +90,9 @@ class Downloader():
         for attempt in range(max_retry): #重试机制
 
             try:
-                response = requests.get(
+                response = self.session.get(
                     url,
                     timeout=30,
-                    headers=self.headers,
                     stream=True             #启用流式传输
                 )
 
@@ -123,26 +129,25 @@ class Downloader():
                 return
 
             except SHAMismatchError as e:         #捕获匹配失败异常
-                print(
-                    f"\n下载失败 {attempt + 1}/{max_retry}: {url}\n 错误: {e},请耐心等待程序自动重试"
-                )
+                if show_retry_message:
+                    print(
+                        f"\n下载失败 {attempt + 1}/{max_retry}: {url}\n 错误: {e},请耐心等待程序自动重试"
+                    )
                 time.sleep(min(2 ** attempt, 30))                #失败后等待一定时间再重试(指数退避，最大30秒)
-
-                if temp_path.exists():   #删除临时文件
-                    temp_path.unlink()
-
-                print("开始重试")  
+                temp_path.unlink(missing_ok=True)#删除临时文件
+                if show_retry_message:
+                    print("开始重试")  
 
             except requests.RequestException as e:
-                print(
-                    f"\n下载失败 {attempt + 1}/{max_retry}: {url}\n 错误: {e},请耐心等待程序自动重试"
-                )
+                if show_retry_message:
+                    print(
+                        f"\n下载失败 {attempt + 1}/{max_retry}: {url}\n 错误: {e},请耐心等待程序自动重试"
+                    )
                 time.sleep(min(2 ** attempt, 30))                #失败后等待一定时间再重试(指数退避，最大30秒)
 
-                if temp_path.exists():   #删除临时文件
-                    temp_path.unlink()
-
-                print("开始重试")
+                temp_path.unlink(missing_ok=True)                                           #删除临时文件
+                if show_retry_message:
+                    print("开始重试")
 
 
         raise Exception(
@@ -174,7 +179,8 @@ class Downloader():
                                 expected_sha1=task.get("sha1",None) if sha1_enabled else None,
                                 max_retry=max_retry,
                                 show_progress=False,
-                                silent_success=True)
+                                silent_success=True,
+                                show_retry_message=False)
                 futures.append(future)
 
             for future in as_completed(futures):

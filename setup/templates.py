@@ -21,7 +21,7 @@ TEMPLATES={
 
     "launcher": {
         "name": "Axiom Launcher",
-        "version": "0.14.0"
+        "version": "0.14.1"
     },
 
     "minecraft": {
@@ -47,7 +47,7 @@ TEMPLATES={
         "selected_source":"mojang",
         "manifest_refresh_on_source_change": True,
         "library_threads": 12,
-        "asset_threads": 40
+        "asset_threads": 32
         }
 
     }
