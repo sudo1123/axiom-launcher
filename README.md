@@ -20,6 +20,8 @@
 - **classpath 自动拼接** — 自动构建依赖库 classpath 并启动游戏进程
 - **版本清单缓存** — 自动缓存版本 manifest，超过 24 小时自动刷新
 - **Fabric 加载器自动安装** — 自动下载 Fabric 专属版本 json 与追加依赖库，安装时可选 loader 稳定版，一键启动
+- **并发下载** — 依赖库与资源文件的下载并发数可独立调整（默认 12 / 40），加快大体积文件下载
+- **下载源自动刷新** — 切换下载源时自动刷新版本清单缓存，确保版本列表与所选源一致
 
 ## Client ID 警告
 
@@ -95,6 +97,8 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 |------|------|
 | `1. 查看当前下载源` | 显示当前配置值与下载源名称 |
 | `2. 切换下载源` | 在 Mojang 官方源 / BMCLAPI 之间切换 |
+| `3. 切换"下载源变更时自动刷新版本列表"` | 开启/关闭切换下载源时自动刷新版本清单 |
+| `4. 调整下载并发数` | 分别调整依赖库 / 资源文件的下载并发数 |
 
 账号管理：
 
@@ -129,12 +133,13 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 
 | 文件 | 用途 | 关键字段 |
 |------|------|----------|
-| `config.json` | 启动器主配置 | `launcher.name` / `launcher.version`、`minecraft.selected_instance`、`java.memory.min/max`、`game.resolution.width/height`、`game.fullscreen`、`download.selected_source` |
+| `config.json` | 启动器主配置 | `launcher.name` / `launcher.version`、`minecraft.selected_instance`、`java.memory.min/max`、`game.resolution.width/height`、`game.fullscreen`、`download.selected_source` / `manifest_refresh_on_source_change` / `library_threads` / `asset_threads` |
 | `accounts.json` | 账号配置 | `accounts[].id` / `type`（`offline` / `microsoft`）/ `username` / `player_name` / `uuid` / `access_token` / `refresh_token` / `microsoft_token` / `xuid` / `client_id`、`selected` |
 | `launch_context.json` | 启动参数 features 开关 | `is_demo_user`、`has_custom_resolution`、`has_quick_plays_support`、`is_quick_play_*` 等 |
 
 微软账号条目包含 OAuth 凭证（`access_token` / `refresh_token` / `microsoft_token`）与玩家档案（`player_name` / `uuid` / `xuid`）。这些 token 为明文存储，请注意保护 `configs/accounts.json` 的访问权限。token 过期后启动器会在启动前自动用 `refresh_token` 刷新。
 所有配置文件均可使用 `python setup.py` 生成带默认值的版本（已存在则跳过）。
+`configs/config.json` 使用 `config_version` 字段（当前为 6）标识配置结构版本。`download.manifest_refresh_on_source_change` 控制切换下载源时是否自动刷新版本清单；`download.library_threads` 与 `download.asset_threads` 分别控制依赖库与资源文件的下载并发数。
 
 每个实例对应 `instances/<id>/instance.json`，记录：
 
@@ -195,7 +200,7 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 
 ## 项目状态
 
-当前版本：**v0.13.0**
+当前版本：**v0.14.0**
 
 - ✅ 离线模式完整启动流程（实例管理 → 版本检查 → 参数解析 → 启动游戏）
 - ✅ 多实例管理（创建、查看、安装、删除，含安装状态追踪）

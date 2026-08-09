@@ -380,13 +380,14 @@ Minecraft版本:
 1. 查看当前下载源
 2. 切换下载源
 3. 切换"下载源变更时自动刷新版本列表"
-4. 返回
+4. 调整下载并发数
+5. 返回
 
 请输入:
             """)
             choice = input(">")
 
-            if choice == "4":
+            if choice == "5":
                 break
             elif choice == "1":
                 self.show_download_source()
@@ -394,6 +395,42 @@ Minecraft版本:
                 self.change_download_source()
             elif choice == "3":
                 self.toggle_manifest_refresh()
+            elif choice == "4":
+                self.adjust_threads()
+    def adjust_threads(self):
+        """调整依赖库/资源文件的下载并发数"""
+        while True:
+            lib = self.config_manager.get_library_threads()
+            asset = self.config_manager.get_asset_threads()
+            print(f"""
+====================
+调整下载并发数
+====================
+
+1. 依赖库并发: {lib}
+2. 资源文件并发: {asset}
+3. 返回
+
+请输入:
+            """)
+            choice = input(">")
+            if choice == "3":
+                break
+            elif choice in ("1", "2"):
+                try:
+                    value = int(input("请输入新的并发数:\n>"))
+                except ValueError:
+                    print("请输入数字")
+                    continue
+                if value <= 0:
+                    print("并发数必须为正整数")
+                    continue
+                if choice == "1":
+                    self.config_manager.set_library_threads(value)
+                else:
+                    self.config_manager.set_asset_threads(value)
+                print("已保存")
+
 
     def show_download_source(self):
         selected = self.config_manager.get_selected_download_source()

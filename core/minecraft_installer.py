@@ -24,6 +24,7 @@ from core.asset_manager import AssetManager
 from core.native_manager import NativeManager
 from core.source_manager import SourceManager
 from core.loaders.loader_manager import LoaderManager
+from core.config_manager import ConfigManager
 
 
 class MinecraftInstaller:
@@ -36,65 +37,48 @@ class MinecraftInstaller:
         self.runtime_context = RuntimeContext().to_dict()
         self.library_manager = LibraryManager(self.runtime_context)
         self.asset_manager= AssetManager()
-        self.download_source = SourceManager().get_download_source()
         self.native_manager = NativeManager()
 
     def download_libraries(self, artifacts, instance_path):
-        total = len(artifacts)
-        for idx, artifact in enumerate(artifacts, 1):
-            target_path = (
-                instance_path
-                / ".minecraft"
-                / "libraries"
-                / artifact["path"]
-            )
-
-            # 同一行刷新整体进度（\r 回到行首，不换行）
-            print(f"\r  库文件进度: [{idx}/{total}]", end="")
-
-            self.downloader.download(
-                self.download_source.rewrite_url(artifact["url"]),
-                target_path,
-                show_progress=False,      # 不显示单文件进度，避免覆盖计数器
-                silent_success=True,
-                expected_sha1=artifact.get("sha1") 
-            )
-
-        print(f"\r  库文件下载完成! 共 {total} 个文件")
+        download_source = SourceManager().get_download_source()
+        threads = ConfigManager().get_library_threads()
+        tasks = []
+        for artifact in artifacts:
+            target_path = instance_path / ".minecraft" / "libraries" / artifact["path"]
+            tasks.append({
+                "url": download_source.rewrite_url(artifact["url"]),
+                "target_path": str(target_path),
+                "sha1": artifact.get("sha1"),
+            })
+        result = self.downloader.download_many(tasks, sha1_enabled=True, show_progress=True,threads=threads)
+        if result["failed"]:
+            raise Exception(f"库文件下载失败，共 {len(result['failed'])} 个文件失败")
 
     def download_asset_objects(self, asset_index_path):
         objects_list = self.asset_manager.get_objects_list(
             asset_index_path, self.instance_path
         )
-        total = len(objects_list)
-
-        for idx, asset_object in enumerate(objects_list, 1):
-
-            # 每3个文件刷新一次计数器
-            if idx % 3 == 0 or idx == total:
-                print(f"\r  资源文件进度: [{idx}/{total}]", end="")
-
-            self.downloader.download(
-                asset_object["url"],
-                asset_object["path"],
-                show_progress=False,
-                silent_success=True,
-                expected_sha1=asset_object["hash"]
-            )
-
-        print(f"\r  资源文件下载完成! 共 {total} 个文件")
-
+        threads = ConfigManager().get_asset_threads()
+        tasks = [{
+            "url": obj["url"],
+            "target_path": str(obj["path"]),
+            "sha1": obj["hash"],          # 注意字段名是 hash
+        } for obj in objects_list]
+        result = self.downloader.download_many(tasks, sha1_enabled=True, show_progress=True,threads=threads)
+        if result["failed"]:
+            raise Exception(f"资源文件下载失败，共 {len(result['failed'])} 个文件失败")
 
     def install(self, instance_id, version):
+        download_source = SourceManager().get_download_source()
         print(f"开始安装 Minecraft {version}")
         print(f"目标实例: {instance_id}")
-        print(self.asset_manager.download_source.get_source_notice())
+        print(download_source.get_source_notice())
         self.instance_manager.set_installation_status(instance_id,"installing") #修改实例安装状态
 
         # == 下载版本json ==
         print("[1/6] 下载版本json...")
         version_dic=self.version_manager.get_version(version)
-        version_url=self.download_source.rewrite_url(version_dic["url"])
+        version_url=download_source.rewrite_url(version_dic["url"])
         self.instance_path=self.instance_manager.get_instance_path(instance_id)
         download_path=self.instance_path / ".minecraft" / "versions" / str(version) / f"{version}.json" 
         self.downloader.download(
@@ -107,7 +91,7 @@ class MinecraftInstaller:
         # == 下载客户端 ==
         print("[2/6] 下载客户端jar...")
         client_info=self.version_parser.get_client_info(download_path)
-        client_url=self.download_source.rewrite_url(client_info["url"])
+        client_url=download_source.rewrite_url(client_info["url"])
         download_path=self.instance_path / ".minecraft" / "versions" / str(version) / f"{version}.jar"
         self.downloader.download(
             client_url, download_path,
@@ -133,14 +117,14 @@ class MinecraftInstaller:
         if native_libraries_list != []:
             #覆盖url为镜像源
             for native in native_libraries_list:
-                native["url"] = self.download_source.rewrite_url(native["url"])
+                native["url"] = download_source.rewrite_url(native["url"])
             self.native_manager.install_extraction_natives(native_libraries_list, instance_id)
             print("原生库下载并解压完毕")
         else:
             print("已跳过下载原生库")
         # == 从版本json提取assetIndex ==
         asset_index_info=self.version_parser.get_asset_index(self.version_json_path)
-        asset_index_url=self.download_source.rewrite_url(asset_index_info["url"])
+        asset_index_url=download_source.rewrite_url(asset_index_info["url"])
         asset_index_id=asset_index_info["id"]
         asset_index_path=self.instance_path / ".minecraft" / "assets" / "indexes" / f"{asset_index_id}.json"
         # == 下载assetIndex文件 ==

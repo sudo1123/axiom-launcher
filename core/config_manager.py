@@ -116,3 +116,24 @@ class ConfigManager():
         download["manifest_refresh_on_source_change"] = bool(enabled)
 
         self.save_config(config)
+
+    def get_library_threads(self):
+        """获取依赖库下载并发数"""
+        config = self.load_config()
+        return config["download"]["library_threads"]
+
+    def set_library_threads(self, threads: int):
+        config = self.load_config()
+        config["download"]["library_threads"] = int(threads)
+        self.save_config(config)
+
+    def get_asset_threads(self):
+        """获取资源文件下载并发数"""
+        config = self.load_config()
+        return config["download"]["asset_threads"]
+
+    def set_asset_threads(self, threads: int):
+        config = self.load_config()
+        config["download"]["asset_threads"] = int(threads)
+        self.save_config(config)
+

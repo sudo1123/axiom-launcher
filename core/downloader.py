@@ -13,7 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import as_completed
 from pathlib import Path 
 import hashlib
 import requests
@@ -147,3 +148,46 @@ class Downloader():
         raise Exception(
             f"下载失败，超过最大重试次数: {url}"
         )
+
+    def download_many(self,tasks:list,sha1_enabled:bool,max_retry:int=10,threads:int=8,show_progress=False):
+        """
+        多线程下载器
+        tasks:存储所有要下载对象信息的list，结构
+        [{"url":str ,"target_path":str,sha1:str},{...},{...}]
+        max_retry:单个下载任务的最大重试次数(默认为10)
+        threads: 线程并发数(默认为8)
+        sha1_enabled:是否全局启用sha1校验，设置为false则全局禁用，设置为true则将校验所有有sha1字段的对象，如没有或者为空则自动跳过校验
+        返回: {"failed": [异常对象, ...]}
+        """
+        completed=0
+        total=len(tasks)
+        failed=0
+        failures=[]
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            last_refresh=None
+            futures=[]
+            for task in tasks:
+                #关闭单线程的所有输出，避免引发IO冲突
+                future=executor.submit(self.download,
+                                url=task["url"],
+                                target_path=task["target_path"],
+                                expected_sha1=task.get("sha1",None) if sha1_enabled else None,
+                                max_retry=max_retry,
+                                show_progress=False,
+                                silent_success=True)
+                futures.append(future)
+
+            for future in as_completed(futures):
+                completed+=1
+                try:
+                    result=future.result()
+                except Exception as e:
+                    failures.append(e)
+                    failed+=1
+                if show_progress:
+                    if last_refresh==None or time.time() - last_refresh >= 0.5:
+                        print(f"\r 当前下载任务共{total}个，已完成{completed}(失败:{failed})",end="")
+                        last_refresh=time.time()
+        print()
+        return {"failed":failures}
+                

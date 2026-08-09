@@ -17,11 +17,11 @@
 '''== 配置文件默认内容 == '''
 TEMPLATES={
 "config.json":{
-    "config_version": 5,
+    "config_version": 6,
 
     "launcher": {
         "name": "Axiom Launcher",
-        "version": "0.13.0"
+        "version": "0.14.0"
     },
 
     "minecraft": {
@@ -45,7 +45,9 @@ TEMPLATES={
 
     "download":{
         "selected_source":"mojang",
-        "manifest_refresh_on_source_change": True
+        "manifest_refresh_on_source_change": True,
+        "library_threads": 12,
+        "asset_threads": 40
         }
 
     }

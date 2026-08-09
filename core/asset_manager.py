@@ -18,18 +18,16 @@ from core.source_manager import SourceManager
 import json
 class AssetManager():
     def __init__(self):
-        self.source_manager=SourceManager()
-        self.download_source=self.source_manager.get_download_source()
-        self.asset_url_prefix=self.download_source.get_asset_base_url()
         self.asset_local_path_prefix = Path(".minecraft") / "assets" / "objects"
     def get_objects_list(self,asset_index_path,instance_path):
         with open (asset_index_path,"r",encoding="utf-8") as ai:
             asset_index=json.load(ai)
         objects=asset_index["objects"]
         objects_list=[]
+        asset_url_prefix = SourceManager().get_download_source().get_asset_base_url()
         for name,mc_object in objects.items():
             object_hash=self.get_object_hash(mc_object)
-            url=self.generate_object_url(object_hash)
+            url=self.generate_object_url(asset_url_prefix,object_hash)
             path=self.generate_object_local_path(object_hash,instance_path)
             object_dict={"url":url,
                          "path":path,
@@ -42,8 +40,8 @@ class AssetManager():
     def get_object_hash(self,object):
         object_hash=object["hash"]
         return object_hash
-    def generate_object_url(self,object_hash):
-        url=f"{self.asset_url_prefix}/{object_hash[:2]}/{object_hash}" 
+    def generate_object_url(self, asset_url_prefix, object_hash):
+        url = f"{asset_url_prefix}/{object_hash[:2]}/{object_hash}"
         return url
     def generate_object_local_path(self,object_hash,instance_path):
         instance_path=Path(instance_path)
