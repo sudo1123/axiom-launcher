@@ -490,6 +490,10 @@ Minecraft版本:
     def launch_menu_loop(self):
         while True:
             result=self.instance_manager.list_instances()
+            if not result:
+                print("没有可用的实例，请先前往「实例管理」创建实例！")
+                input("按ENTER返回主菜单")
+                return
             print("""
 ====================
 启动游戏 : 实例列表
@@ -504,7 +508,10 @@ Minecraft版本:
                 index+=1
             print("")
             print("请输入要启动的实例")
+            print("0. 返回主菜单")
             choice=input(">")
+            if choice == "0":
+                break
             if choice in instance_name_dic.keys():
                 self.config_manager.set_selected_instance(instance_name_dic[choice])
                 print(
@@ -519,7 +526,7 @@ Minecraft版本:
                 break
                 
             else:
-                continue
+                print("输入无效，请重新输入数字或按 0 返回")
 
     def account_menu_loop(self):
         while True:
