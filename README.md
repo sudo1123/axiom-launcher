@@ -1,6 +1,6 @@
 # Axiom Launcher
 
-![alt text](AxiomLauncher-icon~1-1.png)
+![alt text](AxiomLauncher-icon~1.png)
 
 一个用 Python 编写的第三方 Minecraft: Java Edition 启动器。
 > A third-party Minecraft: Java Edition launcher written in Python.
