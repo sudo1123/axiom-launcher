@@ -27,3 +27,6 @@ test/*
 #==== UV ====
 .venv/
 build_nuitka.ps1
+
+#=== nuitka ====
+build/
