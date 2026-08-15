@@ -59,6 +59,8 @@ def build_parser():
     p.add_argument("--set-asset-threads", type=int, help="设置资源文件下载并发数")
     p.add_argument("--set-manifest-refresh", choices=["on", "off"],
                    help="设置下载源变更时自动刷新版本清单开关")
+    p.add_argument("--set-java-source", choices=["adoptium", "tuna"], help="切换Java下载源（adoptium官方/tuna清华镜像）")
+
     return p
 
 def main():
@@ -88,6 +90,8 @@ def main():
         cmd.switch_account(args.switch_account); return
     if args.delete_account:
         cmd.delete_account(args.delete_account); return
+    if args.set_java_source:
+        cmd.set_java_source(args.set_java_source); return
     if args.set_download_source:
         cmd.set_download_source(args.set_download_source); return
     if args.set_library_threads is not None:
@@ -96,6 +100,7 @@ def main():
         cmd.set_asset_threads(args.set_asset_threads); return
     if args.set_manifest_refresh is not None:
         cmd.set_manifest_refresh(args.set_manifest_refresh); return
+
 
     # 无参数：保持原有交互式菜单
     CLI().run()

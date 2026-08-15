@@ -170,3 +170,8 @@ class Commands:
     def set_manifest_refresh(self, val):
         self.config_manager.set_manifest_refresh_on_source_change(val == "on")
         print(f"下载源变更自动刷新已{'开启' if val == 'on' else '关闭'}")
+
+    def set_java_source(self, source):
+        self.config_manager.set_java_source(source)
+        print(f"Java下载源已切换: {source}")
+

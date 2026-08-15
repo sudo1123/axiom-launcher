@@ -13,7 +13,7 @@
 - **多实例管理** — 创建、查看、安装、删除多个独立实例，每个实例拥有隔离的 `.minecraft` 目录，并独立记录安装状态与 Java 路径
 - **Minecraft 自动安装** — 一键从所选下载源下载版本 json、客户端 jar、依赖库、原生库、资源索引及资源文件，无需手动放置任何游戏文件
 - **多下载源** — 内置 Mojang 官方源与 BMCLAPI 镜像源，可在「设置」菜单中随时切换，适应不同网络环境
-- **Java 自动管理** — 自动在 PATH 与系统常见安装位置查找 Java 并校验版本；缺失时可从 Adoptium API 自动下载对应版本 JDK
+- **Java 自动管理** — 自动在 PATH 与系统常见安装位置查找 Java 并校验版本；缺失时可从 Adoptium API 自动下载对应版本 JDK，支持选择清华 TUNA 镜像源加速下载
 - **原生库处理** — 自动下载并解压原生库（natives），正确应用解压排除规则
 - **离线账号系统** — 基于用户名生成确定性的离线 UUID（与官方启动器算法一致，兼容存档 / 皮肤缓存）
 - **Microsoft 正版登录** — 通过微软设备码流程（Device Code Flow）登录 Microsoft 账户，自动完成微软 → Xbox Live → XSTS → Minecraft 完整鉴权链，获取真实玩家名与 UUID；支持 refresh token 自动续期，token 过期时启动前自动刷新，可进入正版（online-mode）服务器
@@ -102,6 +102,8 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 | `2. 切换下载源` | 在 Mojang 官方源 / BMCLAPI 之间切换 |
 | `3. 切换"下载源变更时自动刷新版本列表"` | 开启/关闭切换下载源时自动刷新版本清单 |
 | `4. 调整下载并发数` | 分别调整依赖库 / 资源文件的下载并发数 |
+| `5. 切换Java下载源` | 在 Adoptium 官方源 / 清华 TUNA 镜像源之间切换 |
+| `6. 关于` | 显示启动器版本号与作者 |
 
 账号管理：
 
@@ -138,6 +140,7 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 | `--set-library-threads <N>` | 值 | 设置依赖库下载并发数 |
 | `--set-asset-threads <N>` | 值 | 设置资源文件下载并发数 |
 | `--set-manifest-refresh <on\|off>` | 值 | 设置下载源变更时自动刷新版本清单开关 |
+| `--set-java-source <adoptium\|tuna>` | 值 | 切换Java下载源（官方 / 清华 TUNA 镜像） |
 
 示例：
 
@@ -168,6 +171,10 @@ python main.py           # 无参数：进入交互式菜单
 |--------|--------|------|
 | `mojang` | Mojang 官方源 | 从 Mojang 官方服务器下载（默认） |
 | `bmclapi` | BMCLAPI | BangBang93 提供的镜像源，中国大陆网络环境下通常更快 |
+| `adoptium` | Adoptium 官方源 | 从 Adoptium API 下载 Temurin JDK（默认） |
+| `tuna` | 清华 TUNA 镜像源 | 从 mirrors.tuna.tsinghua.edu.cn 下载 Temurin JDK，国内网络更快 |
+
+Java 下载源在 `configs/config.json` 的 `download.java_source` 字段配置，也可通过 CLI 的「设置」菜单切换。
 
 下载源在 `configs/config.json` 的 `download.selected_source` 字段配置，也可通过 CLI 的「设置」菜单切换。
 
@@ -175,7 +182,7 @@ python main.py           # 无参数：进入交互式菜单
 
 | 文件 | 用途 | 关键字段 |
 |------|------|----------|
-| `config.json` | 启动器主配置 | `launcher.name` / `launcher.version`、`minecraft.selected_instance`、`java.memory.min/max`、`game.resolution.width/height`、`game.fullscreen`、`download.selected_source` / `manifest_refresh_on_source_change` / `library_threads` / `asset_threads` |
+| `config.json` | 启动器主配置 | `launcher.name` / `launcher.version`、`minecraft.selected_instance`、`java.memory.min/max`、`game.resolution.width/height`、`game.fullscreen`、`download.selected_source` / `java_source` / `manifest_refresh_on_source_change` / `library_threads` / `asset_threads`
 | `accounts.json` | 账号配置 | `accounts[].id` / `type`（`offline` / `microsoft`）/ `username` / `player_name` / `uuid` / `access_token` / `refresh_token` / `microsoft_token` / `xuid` / `client_id`、`selected` |
 | `launch_context.json` | 启动参数 features 开关 | `is_demo_user`、`has_custom_resolution`、`has_quick_plays_support`、`is_quick_play_*` 等 |
 
@@ -222,6 +229,7 @@ python main.py           # 无参数：进入交互式菜单
 │   ├── mojang_source.py       # Mojang 官方下载源实现
 │   ├── bmcl_api_source.py     # BMCLAPI 镜像下载源实现
 │   ├── source_manager.py      # 下载源管理器（按配置选择下载源）
+│   ├── runtime_paths.py       # 程序目录与路径解析
 │   └── loaders/               # 加载器策略模块
 │   │   ├── loader.py          # Loader 抽象基类（统一安装/启动接口）
 │   │   ├── loader_manager.py  # LoaderManager 策略工厂（按类型获取加载器）
@@ -245,7 +253,7 @@ python main.py           # 无参数：进入交互式菜单
 
 ## 项目状态
 
-当前版本：**v0.15.0**（以 `pyproject.toml` 的 `version` 字段为准）
+当前版本：**v0.16.0**（以 `pyproject.toml` 的 `version` 字段为准）
 
 - ✅ 离线模式完整启动流程（实例管理 → 版本检查 → 参数解析 → 启动游戏）
 - ✅ 多实例管理（创建、查看、安装、删除，含安装状态追踪）
@@ -253,6 +261,7 @@ python main.py           # 无参数：进入交互式菜单
 - ✅ Minecraft 自动下载安装（版本 json、客户端 jar、依赖库、原生库、资源索引、资源文件）
 - ✅ 多下载源支持（Mojang 官方源 / BMCLAPI 镜像，可切换）
 - ✅ Java 自动查找与缺失时自动下载（Adoptium）
+- ✅ Java 下载源支持（Adoptium 官方源 / 清华 TUNA 镜像，可切换）
 - ✅ 原生库自动下载与解压
 - ✅ Fabric 加载器自动安装（版本选择、专属版本 json、追加依赖库）
 - ❌ Forge 加载器自动安装

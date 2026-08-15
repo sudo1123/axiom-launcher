@@ -18,7 +18,7 @@ import zipfile
 import tarfile
 import glob
 from pathlib import Path
-
+from core.config_manager import ConfigManager
 from core.runtime_context import RuntimeContext
 from core.downloader import Downloader
 class JavaDownloader:
@@ -29,7 +29,7 @@ class JavaDownloader:
         #映射Adoptium API所需的系统和架构方言
         self.os_map = {"windows": "windows", "linux": "linux", "osx": "mac"}
         self.arch_map = {"x86_64": "x64", "x86": "x86", "arm64": "aarch64", "arm": "arm"}
-
+        self.java_source = ConfigManager().get_java_source()
 
     def install(self, feature_version, target_dir):
         #入口方法
@@ -65,6 +65,12 @@ class JavaDownloader:
                 os == os_name            and
                 arch == local_arch       and
                 image_type == local_image_type):
+                if self.java_source == "tuna":
+                    # 清华 TUNA 镜像：按镜像目录结构拼接（字段与 API 返回一致）
+                    package_name = asset["binary"]["package"]["name"]
+                    mirror_root = "https://mirrors.tuna.tsinghua.edu.cn/Adoptium"
+                    return f"{mirror_root}/{major}/{image_type}/{arch}/{os}/{package_name}"
+                #adoptium官方源路径
                 package_link=asset["binary"]["package"]["link"]
                 return package_link
 

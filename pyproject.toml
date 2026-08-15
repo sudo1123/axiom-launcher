@@ -1,10 +1,10 @@
 [project]
 name = "axiom-launcher"
-version = "0.15.0"
+version = "0.16.0"
 description = "A Minecraft launcher"
 readme = "README.md"
 authors = [
-    { name = "Felix", email = "quqi0414@163.com" }
+    { name = "Felix Qu", email = "quqi0414@163.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [

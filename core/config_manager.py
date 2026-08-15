@@ -138,3 +138,24 @@ class ConfigManager():
         config["download"]["asset_threads"] = int(threads)
         self.save_config(config)
 
+    def get_java_source(self):
+        """
+        获取当前 Java 下载源（adoptium 官方 / tuna 清华镜像）
+        """
+        config = self.load_config()
+        download = config.setdefault("download", {})
+
+        return download.get("java_source", "adoptium")
+
+    def set_java_source(self, source_name: str):
+        """
+        修改当前 Java 下载源
+        """
+        config = self.load_config()
+        download = config.setdefault("download", {})
+
+        download["java_source"] = source_name
+
+        self.save_config(config)
+
+

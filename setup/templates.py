@@ -26,16 +26,29 @@ def get_launcher_version():
     except Exception:
         return "0.0.0"
 
+def get_launcher_author():
+    try:
+        pyproject_path = get_program_dir() / "pyproject.toml"
+        with open(pyproject_path, "rb") as f:
+            authors = tomllib.load(f)["project"]["authors"]
+        names = [a.get("name", "") for a in authors if a.get("name")]
+        return " / ".join(names) or "Axiom Launcher 团队"
+    except Exception:
+        return "未知"
+
+
 VERSION=get_launcher_version()
+AUTHOR=get_launcher_author()
 
 '''== 配置文件默认内容 == '''
 TEMPLATES={
 "config.json":{
-    "config_version": 6,
+    "config_version": 7,
 
     "launcher": {
         "name": "Axiom Launcher",
-        "version": VERSION
+        "version": VERSION,
+        "author":  AUTHOR
     },
 
     "minecraft": {
@@ -59,6 +72,7 @@ TEMPLATES={
 
     "download":{
         "selected_source":"mojang",
+        "java_source": "adoptium",
         "manifest_refresh_on_source_change": True,
         "library_threads": 12,
         "asset_threads": 32

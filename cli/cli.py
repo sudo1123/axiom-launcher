@@ -25,6 +25,7 @@ from core.minecraft_installer import MinecraftInstaller
 from core.source_manager import SourceManager
 from core.loaders.loader_manager import LoaderManager
 from core.runtime_paths import get_program_dir
+from setup.templates import get_launcher_version, get_launcher_author
 
 class CLI():
     def __init__(self):
@@ -160,15 +161,22 @@ ID:
                     print(f"{index}. {item.name}")
                     instance_name_dic[str(index)] = item.name
                     index += 1
+                print("")
+                print("0. 返回")
 
+                choice = input("请选择实例查看详细信息(输入0直接返回上级菜单):\n>")
 
-                choice = input("请选择实例:\n>")
+                if choice == "0":
+                    continue
 
+                if choice not in instance_name_dic:
+                    print("选择无效")
+                    input("按ENTER返回")
+                    continue
 
-                if choice in instance_name_dic:
-                    self.show_instance(
-                        instance_name_dic[choice]
-                    )
+                self.show_instance(
+                    instance_name_dic[choice]
+                )
 
             elif choice == "2":
                 self.create_instance()
@@ -382,13 +390,15 @@ Minecraft版本:
 2. 切换下载源
 3. 切换"下载源变更时自动刷新版本列表"
 4. 调整下载并发数
-5. 返回
+5. 切换Java下载源
+6. 关于
+7. 返回
 
 请输入:
             """)
             choice = input(">")
 
-            if choice == "5":
+            if choice == "7":
                 break
             elif choice == "1":
                 self.show_download_source()
@@ -398,6 +408,11 @@ Minecraft版本:
                 self.toggle_manifest_refresh()
             elif choice == "4":
                 self.adjust_threads()
+            elif choice == "5":
+                self.change_java_source()
+            elif choice == "6":
+                self.show_about()
+
     def adjust_threads(self):
         """调整依赖库/资源文件的下载并发数"""
         while True:
@@ -468,6 +483,45 @@ Minecraft版本:
             print("选择无效")
 
         input("按ENTER返回")
+
+
+    def change_java_source(self):
+        print("""
+====================
+切换Java下载源
+====================
+""")
+        selected = self.config_manager.get_java_source()
+        print(f"当前Java下载源: {selected}")
+
+        java_source_map = {
+            "1": ("adoptium", "Adoptium 官方源"),
+            "2": ("tuna", "清华 TUNA 镜像源"),
+        }
+        for key, (value, display_name) in java_source_map.items():
+            print(f"{key}. {value} ({display_name})")
+
+        choice = input("请选择Java下载源:\n>")
+
+        if choice in java_source_map:
+            self.config_manager.set_java_source(java_source_map[choice][0])
+            print("Java下载源已切换")
+        else:
+            print("选择无效")
+
+        input("按ENTER返回")
+    def show_about(self):
+        print(f"""
+====================
+关于 Axiom Launcher
+====================
+
+版本: {get_launcher_version()}
+作者: {get_launcher_author()}
+""")
+        input("按ENTER返回")
+
+
 
     def toggle_manifest_refresh(self):
         current = self.config_manager.get_manifest_refresh_on_source_change()
