@@ -17,10 +17,11 @@
 from pathlib import Path
 import json
 import shutil
+from core.runtime_paths import get_program_dir
 
 class InstanceManager():
     def __init__(self):
-        program_path=Path(__file__).resolve().parent.parent
+        program_path=get_program_dir()
         self.instances_path=program_path / "instances"  #定位实例文件夹
 
     def check_validity_instance(self,instance_path):

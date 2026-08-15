@@ -24,6 +24,7 @@ from core.library_manager import LibraryManager
 from core.rule_checker import RuleChecker
 from core.java_manager import JavaManager
 from core.loaders.loader_manager import LoaderManager
+from core.runtime_paths import get_program_dir
 import json
 import subprocess
 import os
@@ -333,7 +334,7 @@ class Launcher:
 
     def start(self,auto_download_java=False):
         #配置文件加载
-        self.PROGRAM_DIR = Path(__file__).resolve().parent.parent
+        self.PROGRAM_DIR = get_program_dir()
         self.CONFIG_DIR = self.PROGRAM_DIR / "configs"
         self.config = self.config_manager.load_config()
         self.runtime_context=runtime_context_load()

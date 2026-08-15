@@ -23,6 +23,7 @@ import os
 from pathlib import Path
 import subprocess
 import re
+from core.runtime_paths import get_program_dir
 class JavaManager:
     def __init__(self):
         self.instance_manager=InstanceManager()
@@ -144,7 +145,7 @@ class JavaManager:
             feature_version = self.get_instance_java_version(instance_id)
     
             rt = RuntimeContext()
-            program_dir = Path(__file__).resolve().parent.parent  
+            program_dir = get_program_dir()
             target_dir = program_dir / "runtime" / "java" / f"{feature_version}-{rt.os_name}-{rt.arch}"
     
             # 下载并解压，得到 java 可执行文件路径

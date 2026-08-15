@@ -24,6 +24,7 @@ from core.config_manager import ConfigManager
 from core.minecraft_installer import MinecraftInstaller
 from core.source_manager import SourceManager
 from core.loaders.loader_manager import LoaderManager
+from core.runtime_paths import get_program_dir
 
 class CLI():
     def __init__(self):
@@ -31,7 +32,7 @@ class CLI():
         self.config_manager = ConfigManager()
         self.launcher = Launcher()
         self.minecraft_installer = MinecraftInstaller()
-        self.accounts_file = Path(__file__).resolve().parent.parent / "configs" / "accounts.json"
+        self.accounts_file = get_program_dir() / "configs" / "accounts.json"
         with open(self.accounts_file, "r", encoding="utf-8") as f:
             self.account_config = json.load(f)
         self.account_manager = AccountManager(self.account_config, str(self.accounts_file))

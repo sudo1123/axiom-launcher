@@ -16,7 +16,8 @@
 
 
 from pathlib import Path
-program_dir=Path(__file__).resolve().parent.parent
+from core.runtime_paths import get_program_dir
+program_dir=get_program_dir()
 import json
 
 class VersionParser():

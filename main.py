@@ -19,10 +19,11 @@ import argparse
 from pathlib import Path
 from cli.cli import CLI
 from cli.commands import Commands
+from core.runtime_paths import get_program_dir
 
 def get_version():
     try:
-        pyproject_path = Path(__file__).resolve().parent / "pyproject.toml"
+        pyproject_path = get_program_dir() / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
             return tomllib.load(f)["project"]["version"]
     except Exception:

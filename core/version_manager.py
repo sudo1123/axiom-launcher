@@ -17,12 +17,13 @@ import time
 from core.downloader import Downloader
 from core.source_manager import SourceManager
 from core.config_manager import ConfigManager
+from core.runtime_paths import get_program_dir
 from pathlib import Path
 import json
 class VersionManager():
     def __init__(self):
         self.downloader = Downloader()
-        self.program_dir=Path(__file__).resolve().parent.parent
+        self.program_dir=get_program_dir()
         self.manifest_path=self.program_dir / "data" / "manifests" / "version_manifest.json"
 
     REFRESH_INTERVAL_SECONDS = 86400   # 24 小时后自动刷新manifests文件

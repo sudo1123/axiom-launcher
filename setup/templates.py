@@ -16,10 +16,11 @@
 
 import tomllib
 from pathlib import Path
+from core.runtime_paths import get_program_dir
 
 def get_launcher_version():
     try:
-        pyproject_path = Path(__file__).resolve().parent.parent / "pyproject.toml"
+        pyproject_path = get_program_dir() / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
             return tomllib.load(f)["project"]["version"]
     except Exception:

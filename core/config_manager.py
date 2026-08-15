@@ -16,9 +16,10 @@
 
 from pathlib import Path
 import json
+from core.runtime_paths import get_program_dir
 class ConfigManager():
     def __init__(self):
-        self.PROGRAM_DIR = Path(__file__).resolve().parent.parent
+        self.PROGRAM_DIR = get_program_dir()
         self.config_file = self.PROGRAM_DIR / "configs" / "config.json"
 
     def load_config(self):

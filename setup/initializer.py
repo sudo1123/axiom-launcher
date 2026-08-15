@@ -18,7 +18,8 @@
 from pathlib import Path
 import json
 from .templates import TEMPLATES  #注意：！！templates前面有点代表在当前文件所在目录下搜索！！
-program_path=Path(__file__).resolve().parent.parent
+from core.runtime_paths import get_program_dir
+program_path=get_program_dir()
 
 def create_dir():
 
