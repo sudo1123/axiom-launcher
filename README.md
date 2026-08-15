@@ -22,7 +22,7 @@
 - **classpath 自动拼接** — 自动构建依赖库 classpath 并启动游戏进程
 - **版本清单缓存** — 自动缓存版本 manifest，超过 24 小时自动刷新
 - **Fabric 加载器自动安装** — 自动下载 Fabric 专属版本 json 与追加依赖库，安装时可选 loader 稳定版，一键启动
-- **并发下载** — 依赖库与资源文件的下载并发数可独立调整（默认 12 / 40），加快大体积文件下载
+- **并发下载** — 依赖库与资源文件的下载并发数可独立调整（默认 12 / 32），加快大体积文件下载
 - **下载源自动刷新** — 切换下载源时自动刷新版本清单缓存，确保版本列表与所选源一致
 
 ## Client ID 警告
@@ -35,7 +35,7 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 
 ## 环境要求
 
-- Python 3.8+
+- Python 3.12+
 - `requests` 依赖（`pip install requests`）
 - 网络连接（用于下载 Minecraft 游戏文件与 Java 运行时）
 - Java：非必需——启动器会自动查找系统 Java，缺失时可在启动流程中选择自动下载
@@ -46,7 +46,8 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
    ```bash
    git clone https://github.com/sudo1123/axiom-launcher
    cd axiom-launcher
-   pip install requests
+   uv sync                # 推荐（项目使用 uv 管理）
+   # 或 pip install requests
    ```
 
 2. 运行初始化脚本，自动生成所需目录和默认配置文件：
@@ -113,6 +114,45 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 | `5. 删除账号` | 删除指定账号 |
 
 
+## 命令行用法
+
+除了交互式菜单，Axiom Launcher 也支持命令行参数，便于脚本化与一键操作。所有参数均为可选，无参数时进入交互式菜单。
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `-V, --version` | 标志 | 显示启动器版本号 |
+| `--list-instances` | 标志 | 列出所有实例（ID / 版本 / 类型 / 安装状态 / Java 路径） |
+| `--launch <实例ID>` | 值 | 直接启动指定实例 |
+| `--auto-download-java` | 标志 | 搭配 `--launch`，Java 缺失时自动下载 |
+| `--create-instance <实例ID>` | 值 | 创建新实例 |
+| `--mc-version <版本>` | 值 | 搭配 `--create-instance`，Minecraft 版本号 |
+| `--type <vanilla\|fabric>` | 值 | 搭配 `--create-instance`，实例类型（默认 vanilla） |
+| `--with-install` | 标志 | 搭配 `--create-instance`，创建后立即安装 |
+| `--install <实例ID>` | 值 | 安装已有实例 |
+| `--delete-instance <实例ID>` | 值 | 删除实例 |
+| `--list-accounts` | 标志 | 列出所有账号 |
+| `--add-offline-account <用户名>` | 值 | 添加离线账号并设为当前 |
+| `--switch-account <账号ID>` | 值 | 切换当前启动账号 |
+| `--delete-account <账号ID>` | 值 | 删除账号 |
+| `--set-download-source <mojang\|bmclapi>` | 值 | 切换下载源 |
+| `--set-library-threads <N>` | 值 | 设置依赖库下载并发数 |
+| `--set-asset-threads <N>` | 值 | 设置资源文件下载并发数 |
+| `--set-manifest-refresh <on\|off>` | 值 | 设置下载源变更时自动刷新版本清单开关 |
+
+示例：
+
+```bash
+python main.py --version
+python main.py --list-instances
+python main.py --launch my_world --auto-download-java
+python main.py --create-instance my_world --mc-version 1.21.4 --type fabric --with-install
+python main.py --install my_world
+python main.py --set-download-source bmclapi
+python main.py --add-offline-account Steve
+python main.py           # 无参数：进入交互式菜单
+```
+
+
 ## 实例类型说明
 
 | 类型 | 自动安装 | 说明 |
@@ -156,10 +196,13 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 
 ```
 .
-├── main.py                    # 入口文件
+├── main.py                    # 入口文件（含命令行参数解析）
 ├── setup.py                   # 初始化脚本
+├── src/axiom_launcher/        # 包入口（pyproject 的 console script 指向）
+│   └── __init__.py
 ├── cli/
-│   └── cli.py                 # 命令行交互界面
+│   ├── cli.py                 # 命令行交互界面（交互式菜单）
+│   └── commands.py            # 命令行参数处理器（非交互命令）
 ├── core/                      # 核心逻辑
 │   ├── launcher.py            # 游戏启动器（版本检查、参数解析、classpath 构建、进程启动）
 │   ├── instance_manager.py    # 多实例管理（创建/删除/查询、安装状态、Java 路径记录）
@@ -202,7 +245,7 @@ Axiom Launcher 项目保留管理、更新或撤销该 Client ID 的权利。
 
 ## 项目状态
 
-当前版本：**v0.14.1**
+当前版本：**v0.15.0**（以 `pyproject.toml` 的 `version` 字段为准）
 
 - ✅ 离线模式完整启动流程（实例管理 → 版本检查 → 参数解析 → 启动游戏）
 - ✅ 多实例管理（创建、查看、安装、删除，含安装状态追踪）
