@@ -331,7 +331,7 @@ class Launcher:
         self.java_manager = JavaManager()
         self.loader_manager =LoaderManager()
 
-    def start(self):
+    def start(self,auto_download_java=False):
         #配置文件加载
         self.PROGRAM_DIR = Path(__file__).resolve().parent.parent
         self.CONFIG_DIR = self.PROGRAM_DIR / "configs"
@@ -377,9 +377,10 @@ class Launcher:
         except ValueError as e: #Java缺失
             required = self.java_manager.get_instance_java_version(self.instance_id)
             print(f"缺少 Java {required}({e})")
-            answer = input("是否自动下载并继续？(y/n): ").strip().lower()
-            if answer != "y":
-                return
+            if not auto_download_java:
+                answer = input("是否自动下载并继续？(y/n): ").strip().lower()
+                if answer != "y":
+                    return
             try:
                 java_path = self.java_manager.download_java_for_instance(self.instance_id)
             except Exception as download_error:

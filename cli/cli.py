@@ -78,7 +78,7 @@ Axiom Launcher
 
         version = input("请输入Minecraft版本:\n>")
 
-        instance_type = input("请输入实例类型(vanilla/fabric/forge):\n>")
+        instance_type = input("请输入实例类型(vanilla/fabric):\n>")
         try:
 
             self.instance_manager.create_instance(
@@ -491,7 +491,7 @@ Minecraft版本:
         while True:
             result=self.instance_manager.list_instances()
             if not result:
-                print("没有可用的实例，请先前往「实例管理」创建实例！")
+                print("没有可用的实例，请先前往「实例管理」创建实例")
                 input("按ENTER返回主菜单")
                 return
             print("""

@@ -14,6 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import tomllib
+from pathlib import Path
+
+def get_launcher_version():
+    try:
+        pyproject_path = Path(__file__).resolve().parent.parent / "pyproject.toml"
+        with open(pyproject_path, "rb") as f:
+            return tomllib.load(f)["project"]["version"]
+    except Exception:
+        return "0.0.0"
+
+VERSION=get_launcher_version()
+
 '''== 配置文件默认内容 == '''
 TEMPLATES={
 "config.json":{
@@ -21,7 +34,7 @@ TEMPLATES={
 
     "launcher": {
         "name": "Axiom Launcher",
-        "version": "0.14.1"
+        "version": VERSION
     },
 
     "minecraft": {
